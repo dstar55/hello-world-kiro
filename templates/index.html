@@ -1,18 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ current_lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hello World</title>
+    <title>Hello World - {{ lang_name }}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
         }
         .container {
             text-align: center;
@@ -20,17 +21,85 @@
             padding: 3rem 5rem;
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
         }
         h1 {
             font-size: 3rem;
             color: #333;
-            margin: 0;
+            margin: 0 0 1rem 0;
+        }
+        .language-info {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 2rem;
+        }
+        .language-switcher {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid #eee;
+        }
+        .lang-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #333;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .lang-btn:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .lang-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        .flag {
+            font-size: 1.5rem;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 2rem 1.5rem;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+            .lang-btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Hello, World!</h1>
+        <h1>{{ greeting }}</h1>
+        <div class="language-info">
+            <em>{{ lang_name }}</em>
+        </div>
+        
+        <div class="language-switcher">
+            {% for code, lang in languages.items() %}
+                <a href="/{% if code != 'en' %}{{ code }}{% endif %}" 
+                   class="lang-btn {% if code == current_lang %}active{% endif %}">
+                    <span class="flag">{{ lang.flag }}</span>
+                    <span>{{ lang.name }}</span>
+                </a>
+            {% endfor %}
+        </div>
     </div>
 </body>
 </html>

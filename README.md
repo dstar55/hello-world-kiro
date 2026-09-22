@@ -1,6 +1,13 @@
 # Hello World - Kiro
 
-A simple Python Flask web application that displays "Hello, World!" on the homepage.
+A simple Python Flask web application that displays "Hello, World!" in multiple languages.
+
+## Supported Languages
+
+- 🇬🇧 **English** - Hello, World!
+- 🇩🇪 **German (Deutsch)** - Hallo, Welt!
+- 🇫🇷 **French (Français)** - Bonjour, le monde!
+- 🇭🇷 **Croatian (Hrvatski)** - Pozdrav, svijete!
 
 ## Prerequisites
 
@@ -57,6 +64,17 @@ http://localhost:5000
 
 You should see "Hello, World!" displayed on the page with a beautiful gradient background.
 
+## Available Routes
+
+The application supports multiple language routes:
+
+- **English (default)**: `http://localhost:5000/`
+- **German**: `http://localhost:5000/de`
+- **French**: `http://localhost:5000/fr`
+- **Croatian**: `http://localhost:5000/hr`
+
+You can also switch between languages using the language selector buttons on the page.
+
 ## Stopping the Application
 
 Press `Ctrl+C` in the terminal where the application is running.
@@ -84,10 +102,12 @@ hello-world-kiro/
 
 ## Features
 
-- Simple, clean Flask project structure
-- Responsive design with modern CSS styling
-- Runs on localhost port 5000
-- Debug mode enabled for development
+- **Multi-language support**: English, German, French, and Croatian
+- **Language switcher**: Easy navigation between language versions with flag emojis
+- **Clean Flask structure**: Route-based language implementation
+- **Responsive design**: Works on desktop, tablet, and mobile devices
+- **Modern styling**: Beautiful gradient background with centered card layout
+- **Debug mode**: Enabled for development with auto-reload
 
 ## Troubleshooting
 
