@@ -4,13 +4,13 @@ A simple Python Flask web application that displays "Hello, World!" in multiple 
 
 ## Supported Languages
 
-- 🇬🇧 **English** - Hello, World!
-- 🇩🇪 **German (Deutsch)** - Hallo, Welt!
-- 🇫🇷 **French (Français)** - Bonjour, le monde!
-- 🇭🇷 **Croatian (Hrvatski)** - Pozdrav, svijete!
-- 🇪🇸 **Spanish (Español)** - ¡Hola, Mundo!
-- 🇹🇷 **Turkish (Türkçe)** - Merhaba, Dünya!
-- 🇵🇹 **Portuguese (Português)** - Olá, Mundo!
+- 🇬🇧 **English** - Hello, World! (Currency: GBP £)
+- 🇩🇪 **German (Deutsch)** - Hallo, Welt! (Currency: EUR €)
+- 🇫🇷 **French (Français)** - Bonjour, le monde! (Currency: EUR €)
+- 🇭🇷 **Croatian (Hrvatski)** - Pozdrav, svijete! (Currency: EUR €)
+- 🇪🇸 **Spanish (Español)** - ¡Hola, Mundo! (Currency: EUR €)
+- 🇹🇷 **Turkish (Türkçe)** - Merhaba, Dünya! (Currency: TRY ₺)
+- 🇵🇹 **Portuguese (Português)** - Olá, Mundo! (Currency: EUR €)
 
 ## Prerequisites
 
@@ -81,6 +81,25 @@ The application supports multiple language routes:
 
 You can also switch between languages using the language selector buttons on the page.
 
+## Currency Converter
+
+The application includes a built-in currency converter that supports the following currencies:
+
+- **USD** - US Dollar ($)
+- **EUR** - Euro (€)
+- **GBP** - British Pound (£)
+- **TRY** - Turkish Lira (₺)
+
+### How to Use
+
+1. Enter the amount you want to convert
+2. Select the source currency from the "From" dropdown
+3. Select the target currency from the "To" dropdown
+4. Click the "Convert" button to see the result
+5. The converter displays both the converted amount and the exchange rate
+
+**Note**: Exchange rates are static values for demonstration purposes. In a production environment, these should be fetched from a live exchange rate API.
+
 ## Stopping the Application
 
 Press `Ctrl+C` in the terminal where the application is running.
@@ -109,6 +128,7 @@ hello-world-kiro/
 ## Features
 
 - **Multi-language support**: English, German, French, Croatian, Spanish, Turkish, and Portuguese
+- **Currency converter**: Convert between USD, EUR, GBP, and TRY with live exchange rates
 - **Language switcher**: Easy navigation between language versions with flag emojis
 - **Clean Flask structure**: Route-based language implementation
 - **Responsive design**: Works on desktop, tablet, and mobile devices
