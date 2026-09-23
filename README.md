@@ -11,6 +11,7 @@ A simple Python Flask web application that displays "Hello, World!" in multiple 
 - 🇪🇸 **Spanish (Español)** - ¡Hola, Mundo! (Currency: EUR €)
 - 🇹🇷 **Turkish (Türkçe)** - Merhaba, Dünya! (Currency: TRY ₺)
 - 🇵🇹 **Portuguese (Português)** - Olá, Mundo! (Currency: EUR €)
+- 🇺🇸 **US Dollar** - USD $ (Base currency for conversions)
 
 ## Prerequisites
 
@@ -83,12 +84,23 @@ You can also switch between languages using the language selector buttons on the
 
 ## Currency Converter
 
-The application includes a built-in currency converter that supports the following currencies:
+The application includes a built-in currency converter with **live exchange rates** that supports the following currencies:
 
 - **USD** - US Dollar ($)
 - **EUR** - Euro (€)
 - **GBP** - British Pound (£)
 - **TRY** - Turkish Lira (₺)
+
+### Exchange Rate Source
+
+Exchange rates are fetched in real-time from **[exchangerate-api.com](https://exchangerate-api.com)**, a free and reliable API that provides current foreign exchange rates from multiple sources.
+
+**Features:**
+- 🔄 **Live rates**: Updated automatically from multiple foreign exchange sources
+- ⚡ **Smart caching**: Rates cached for 1 hour to improve performance
+- 🛡️ **Fallback protection**: Uses static rates if API is unavailable
+- 📊 **Transparent**: Shows whether rates are live or cached
+- 🕐 **Rate timestamps**: Displays when rates were last updated
 
 ### How to Use
 
@@ -96,9 +108,20 @@ The application includes a built-in currency converter that supports the followi
 2. Select the source currency from the "From" dropdown
 3. Select the target currency from the "To" dropdown
 4. Click the "Convert" button to see the result
-5. The converter displays both the converted amount and the exchange rate
+5. The converter displays:
+   - Converted amount with currency symbols
+   - Current exchange rate
+   - Rate source (live/cached)
+   - Last update timestamp
 
-**Note**: Exchange rates are static values for demonstration purposes. In a production environment, these should be fetched from a live exchange rate API.
+### Technical Details
+
+- **API Endpoint**: `https://api.exchangerate-api.com/v4/latest/USD`
+- **Update Frequency**: Updated multiple times per day
+- **Cache Duration**: 1 hour (configurable)
+- **Base Currency**: USD (all conversions use USD as intermediate)
+- **Error Handling**: Automatic fallback to static rates if API is unavailable
+- **No API Key Required**: Uses the free v4 API endpoint
 
 ## Stopping the Application
 
@@ -128,7 +151,10 @@ hello-world-kiro/
 ## Features
 
 - **Multi-language support**: English, German, French, Croatian, Spanish, Turkish, and Portuguese
-- **Currency converter**: Convert between USD, EUR, GBP, and TRY with live exchange rates
+- **Live currency converter**: Convert between USD, EUR, GBP, and TRY with real-time exchange rates
+- **Exchange rate API**: Powered by [exchangerate-api.com](https://exchangerate-api.com) with multi-source data
+- **Smart caching**: Rates cached for 1 hour to optimize performance
+- **Automatic fallback**: Uses static rates if API is unavailable
 - **Language switcher**: Easy navigation between language versions with flag emojis
 - **Clean Flask structure**: Route-based language implementation
 - **Responsive design**: Works on desktop, tablet, and mobile devices

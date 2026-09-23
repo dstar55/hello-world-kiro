@@ -3,10 +3,12 @@ Flask Hello World Application
 
 A simple web application that displays 'Hello, World!' in multiple languages.
 Supports: English, German, French, Croatian, Spanish, Turkish, and Portuguese.
-Includes a currency converter for each country's currency.
+Includes a currency converter with live exchange rates from exchangeratesapi.io.
 """
 
 from flask import Flask, render_template, jsonify, request
+import requests
+from datetime import datetime, timedelta
 
 # Initialize Flask application
 app = Flask(__name__)
@@ -71,18 +73,89 @@ LANGUAGES = {
     }
 }
 
-# Exchange rates (base: USD)
-# In production, these should be fetched from an API like exchangerate-api.com
-EXCHANGE_RATES = {
+# Exchange rates cache
+EXCHANGE_RATES_CACHE = {
+    'rates': None,
+    'last_updated': None,
+    'cache_duration': timedelta(hours=1)  # Cache for 1 hour
+}
+
+# Fallback exchange rates (base: USD) - used if API is unavailable
+FALLBACK_EXCHANGE_RATES = {
     'USD': 1.0,
     'EUR': 0.92,
     'GBP': 0.79,
     'TRY': 34.15,
 }
 
+
+def fetch_exchange_rates():
+    """
+    Fetch live exchange rates from exchangerate-api.com (free v4 API).
+    Uses caching to avoid excessive API calls.
+    Falls back to static rates if API is unavailable.
+    
+    Returns:
+        dict: Exchange rates with USD as base currency
+    """
+    # Check if we have cached rates that are still valid
+    if EXCHANGE_RATES_CACHE['rates'] and EXCHANGE_RATES_CACHE['last_updated']:
+        time_since_update = datetime.now() - EXCHANGE_RATES_CACHE['last_updated']
+        if time_since_update < EXCHANGE_RATES_CACHE['cache_duration']:
+            return EXCHANGE_RATES_CACHE['rates']
+    
+    try:
+        # Fetch latest rates with USD as base currency from exchangerate-api.com (free)
+        response = requests.get('https://api.exchangerate-api.com/v4/latest/USD', timeout=5)
+        response.raise_for_status()
+        
+        data = response.json()
+        
+        # Extract rates - USD is already the base
+        rates = data.get('rates', {})
+        
+        # Update cache
+        EXCHANGE_RATES_CACHE['rates'] = rates
+        EXCHANGE_RATES_CACHE['last_updated'] = datetime.now()
+        
+        print(f"✓ Successfully fetched live exchange rates at {datetime.now()}")
+        print(f"  Rates from: {data.get('provider', 'exchangerate-api.com')}")
+        print(f"  Last updated: {data.get('date', 'unknown')}")
+        return rates
+        
+    except requests.exceptions.RequestException as e:
+        print(f"⚠ Warning: Could not fetch live rates from API: {e}")
+        print("  Using fallback static rates instead")
+        
+        # If API fails and we have no cached rates, use fallback
+        if EXCHANGE_RATES_CACHE['rates'] is None:
+            EXCHANGE_RATES_CACHE['rates'] = FALLBACK_EXCHANGE_RATES
+            EXCHANGE_RATES_CACHE['last_updated'] = datetime.now()
+        
+        return EXCHANGE_RATES_CACHE['rates']
+    except Exception as e:
+        print(f"⚠ Unexpected error fetching exchange rates: {e}")
+        
+        # Use fallback rates
+        if EXCHANGE_RATES_CACHE['rates'] is None:
+            EXCHANGE_RATES_CACHE['rates'] = FALLBACK_EXCHANGE_RATES
+            EXCHANGE_RATES_CACHE['last_updated'] = datetime.now()
+        
+        return EXCHANGE_RATES_CACHE['rates']
+
+
 def get_all_currencies():
-    """Get unique list of all currencies from languages."""
+    """Get unique list of all currencies from languages, including USD."""
     currencies = {}
+    
+    # Add USD first
+    currencies['USD'] = {
+        'code': 'USD',
+        'symbol': '$',
+        'name': 'US Dollar'
+    }
+    
+    # Add currencies from languages
     for lang_code, lang_data in LANGUAGES.items():
         currency = lang_data['currency']
         if currency not in currencies:
@@ -91,6 +164,7 @@ def get_all_currencies():
                 'symbol': lang_data['currency_symbol'],
                 'name': lang_data['currency_name']
             }
+    
     return currencies
 
 
@@ -209,7 +283,7 @@ def portuguese():
 @app.route('/api/convert', methods=['POST'])
 def convert_currency():
     """
-    API endpoint for currency conversion.
+    API endpoint for currency conversion using live exchange rates.
     
     Expects JSON payload with:
     - amount: float
@@ -217,7 +291,7 @@ def convert_currency():
     - to_currency: string (currency code)
     
     Returns:
-        JSON with converted amount and exchange rate
+        JSON with converted amount, exchange rate, and rate source info
     """
     try:
         data = request.get_json()
@@ -225,16 +299,23 @@ def convert_currency():
         from_currency = data.get('from_currency', 'USD')
         to_currency = data.get('to_currency', 'EUR')
         
+        # Fetch live exchange rates
+        exchange_rates = fetch_exchange_rates()
+        
         # Validate currencies
-        if from_currency not in EXCHANGE_RATES or to_currency not in EXCHANGE_RATES:
+        if from_currency not in exchange_rates or to_currency not in exchange_rates:
             return jsonify({'error': 'Invalid currency code'}), 400
         
         # Convert to USD first, then to target currency
-        amount_in_usd = amount / EXCHANGE_RATES[from_currency]
-        converted_amount = amount_in_usd * EXCHANGE_RATES[to_currency]
+        amount_in_usd = amount / exchange_rates[from_currency]
+        converted_amount = amount_in_usd * exchange_rates[to_currency]
         
         # Calculate exchange rate
-        exchange_rate = EXCHANGE_RATES[to_currency] / EXCHANGE_RATES[from_currency]
+        exchange_rate = exchange_rates[to_currency] / exchange_rates[from_currency]
+        
+        # Determine if using live or cached rates
+        time_since_update = datetime.now() - EXCHANGE_RATES_CACHE['last_updated']
+        is_cached = time_since_update < EXCHANGE_RATES_CACHE['cache_duration']
         
         return jsonify({
             'success': True,
@@ -242,7 +323,9 @@ def convert_currency():
             'from_currency': from_currency,
             'to_currency': to_currency,
             'converted_amount': round(converted_amount, 2),
-            'exchange_rate': round(exchange_rate, 4)
+            'exchange_rate': round(exchange_rate, 4),
+            'rate_source': 'cached' if is_cached else 'live',
+            'last_updated': EXCHANGE_RATES_CACHE['last_updated'].isoformat() if EXCHANGE_RATES_CACHE['last_updated'] else None
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
