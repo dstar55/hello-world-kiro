@@ -31,6 +31,21 @@ LANGUAGES = {
         'name': 'Hrvatski',
         'greeting': 'Pozdrav, svijete!',
         'flag': '🇭🇷'
+    },
+    'es': {
+        'name': 'Español',
+        'greeting': '¡Hola, Mundo!',
+        'flag': '🇪🇸'
+    },
+    'tr': {
+        'name': 'Türkçe',
+        'greeting': 'Merhaba, Dünya!',
+        'flag': '🇹🇷'
+    },
+    'pt': {
+        'name': 'Português',
+        'greeting': 'Olá, Mundo!',
+        'flag': '🇵🇹'
     }
 }
 
@@ -92,6 +107,51 @@ def croatian():
                          current_lang='hr',
                          greeting=LANGUAGES['hr']['greeting'],
                          lang_name=LANGUAGES['hr']['name'],
+                         languages=LANGUAGES)
+
+
+@app.route('/es')
+def spanish():
+    """
+    Spanish language route handler.
+    
+    Returns:
+        Rendered HTML template displaying '¡Hola, Mundo!' in Spanish
+    """
+    return render_template('index.html',
+                         current_lang='es',
+                         greeting=LANGUAGES['es']['greeting'],
+                         lang_name=LANGUAGES['es']['name'],
+                         languages=LANGUAGES)
+
+
+@app.route('/tr')
+def turkish():
+    """
+    Turkish language route handler.
+    
+    Returns:
+        Rendered HTML template displaying 'Merhaba, Dünya!' in Turkish
+    """
+    return render_template('index.html',
+                         current_lang='tr',
+                         greeting=LANGUAGES['tr']['greeting'],
+                         lang_name=LANGUAGES['tr']['name'],
+                         languages=LANGUAGES)
+
+
+@app.route('/pt')
+def portuguese():
+    """
+    Portuguese language route handler.
+    
+    Returns:
+        Rendered HTML template displaying 'Olá, Mundo!' in Portuguese
+    """
+    return render_template('index.html',
+                         current_lang='pt',
+                         greeting=LANGUAGES['pt']['greeting'],
+                         lang_name=LANGUAGES['pt']['name'],
                          languages=LANGUAGES)
 
 

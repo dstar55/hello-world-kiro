@@ -8,6 +8,9 @@ A simple Python Flask web application that displays "Hello, World!" in multiple 
 - 🇩🇪 **German (Deutsch)** - Hallo, Welt!
 - 🇫🇷 **French (Français)** - Bonjour, le monde!
 - 🇭🇷 **Croatian (Hrvatski)** - Pozdrav, svijete!
+- 🇪🇸 **Spanish (Español)** - ¡Hola, Mundo!
+- 🇹🇷 **Turkish (Türkçe)** - Merhaba, Dünya!
+- 🇵🇹 **Portuguese (Português)** - Olá, Mundo!
 
 ## Prerequisites
 
@@ -72,6 +75,9 @@ The application supports multiple language routes:
 - **German**: `http://localhost:5000/de`
 - **French**: `http://localhost:5000/fr`
 - **Croatian**: `http://localhost:5000/hr`
+- **Spanish**: `http://localhost:5000/es`
+- **Turkish**: `http://localhost:5000/tr`
+- **Portuguese**: `http://localhost:5000/pt`
 
 You can also switch between languages using the language selector buttons on the page.
 
@@ -102,7 +108,7 @@ hello-world-kiro/
 
 ## Features
 
-- **Multi-language support**: English, German, French, and Croatian
+- **Multi-language support**: English, German, French, Croatian, Spanish, Turkish, and Portuguese
 - **Language switcher**: Easy navigation between language versions with flag emojis
 - **Clean Flask structure**: Route-based language implementation
 - **Responsive design**: Works on desktop, tablet, and mobile devices
