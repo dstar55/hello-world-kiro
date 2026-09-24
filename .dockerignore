@@ -1,0 +1,12 @@
+.git
+.gitignore
+.kiro
+.github
+deploy
+venv
+__pycache__
+*.pyc
+README.md
+LICENSE
+Dockerfile
+.dockerignore

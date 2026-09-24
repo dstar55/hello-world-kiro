@@ -1,0 +1,9 @@
+# Runs on the Hetzner VM at /opt/hello-world/docker-compose.yml
+# (the GitHub Actions workflow copies this file there on every deploy)
+services:
+  app:
+    image: ghcr.io/dstar55/hello-world-kiro:latest
+    restart: unless-stopped
+    ports:
+      # 80 is taken by the VM's existing nginx, so the app is served on 8080
+      - "8080:8000"
