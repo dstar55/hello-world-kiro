@@ -85,83 +85,101 @@
         .converter-form {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
-            max-width: 500px;
+            gap: 1.5rem;
+            max-width: 600px;
             margin: 0 auto;
         }
-        .form-row {
+        .conversion-row {
             display: flex;
             gap: 1rem;
-            align-items: center;
+            align-items: flex-end;
         }
-        .form-group {
+        .currency-input-group {
             flex: 1;
             display: flex;
             flex-direction: column;
             text-align: left;
         }
-        .form-group label {
+        .currency-input-group label {
             font-size: 0.9rem;
             color: #666;
             margin-bottom: 0.5rem;
             font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
-        .form-group input,
-        .form-group select {
+        .input-wrapper {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .amount-input {
+            flex: 2;
+            padding: 0.75rem;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+        }
+        .amount-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .amount-input.loading {
+            background: #f8f9fa;
+        }
+        .currency-select {
+            flex: 1;
             padding: 0.75rem;
             border: 2px solid #dee2e6;
             border-radius: 8px;
             font-size: 1rem;
             transition: border-color 0.3s;
+            cursor: pointer;
         }
-        .form-group input:focus,
-        .form-group select:focus {
+        .currency-select:focus {
             outline: none;
             border-color: #667eea;
         }
-        .convert-btn {
-            padding: 0.75rem 2rem;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+        .equals-sign {
+            font-size: 2rem;
+            color: #667eea;
+            align-self: center;
+            margin: 0 0.5rem;
         }
-        .convert-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-        }
-        .convert-btn:active {
-            transform: translateY(0);
-        }
-        .result {
-            margin-top: 1.5rem;
-            padding: 1rem;
+        .exchange-rate-display {
+            text-align: center;
+            padding: 0.75rem;
             background: #f8f9fa;
             border-radius: 8px;
-            font-size: 1.2rem;
-            color: #333;
-            display: none;
-        }
-        .result.show {
-            display: block;
-        }
-        .result-amount {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #667eea;
-        }
-        .exchange-rate {
             font-size: 0.9rem;
             color: #666;
-            margin-top: 0.5rem;
+            min-height: 2rem;
+        }
+        .exchange-rate-display.show {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        }
+        .rate-info {
+            font-weight: 600;
+            color: #667eea;
+        }
+        .loading-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid #667eea;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
         .error {
             color: #dc3545;
-            margin-top: 0.5rem;
+            text-align: center;
+            padding: 0.5rem;
             display: none;
         }
         .error.show {
@@ -179,8 +197,12 @@
                 padding: 0.5rem 1rem;
                 font-size: 0.9rem;
             }
-            .form-row {
+            .conversion-row {
                 flex-direction: column;
+            }
+            .equals-sign {
+                transform: rotate(90deg);
+                margin: 0;
             }
             .converter-title {
                 font-size: 1.2rem;
@@ -209,53 +231,129 @@
         <div class="currency-converter">
             <h2 class="converter-title">💱 Currency Converter</h2>
             <div class="converter-form">
-                <div class="form-group">
-                    <label for="amount">Amount</label>
-                    <input type="number" id="amount" placeholder="Enter amount" value="100" min="0" step="0.01">
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="fromCurrency">From</label>
-                        <select id="fromCurrency">
-                            {% for code, curr in currencies.items() %}
-                                <option value="{{ code }}">{{ curr.symbol }} {{ code }} - {{ curr.name }}</option>
-                            {% endfor %}
-                        </select>
+                <div class="conversion-row">
+                    <div class="currency-input-group">
+                        <label for="fromAmount">
+                            <span>From</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="number" 
+                                   id="fromAmount" 
+                                   class="amount-input" 
+                                   placeholder="0.00" 
+                                   value="100" 
+                                   min="0" 
+                                   step="0.01">
+                            <select id="fromCurrency" class="currency-select">
+                                {% for code, curr in currencies.items() %}
+                                    <option value="{{ code }}">{{ code }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="toCurrency">To</label>
-                        <select id="toCurrency">
-                            {% for code, curr in currencies.items() %}
-                                <option value="{{ code }}" {% if code == 'EUR' %}selected{% endif %}>{{ curr.symbol }} {{ code }} - {{ curr.name }}</option>
-                            {% endfor %}
-                        </select>
+                    
+                    <div class="equals-sign">=</div>
+                    
+                    <div class="currency-input-group">
+                        <label for="toAmount">
+                            <span>To</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="number" 
+                                   id="toAmount" 
+                                   class="amount-input" 
+                                   placeholder="0.00" 
+                                   min="0" 
+                                   step="0.01">
+                            <select id="toCurrency" class="currency-select">
+                                {% for code, curr in currencies.items() %}
+                                    <option value="{{ code }}" {% if code == 'EUR' %}selected{% endif %}>{{ code }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
                     </div>
                 </div>
-                <button class="convert-btn" onclick="convertCurrency()">Convert</button>
-                <div id="result" class="result"></div>
+                
+                <div id="exchangeRateDisplay" class="exchange-rate-display">
+                    <span id="rateInfo"></span>
+                </div>
+                
                 <div id="error" class="error"></div>
             </div>
         </div>
     </div>
     
     <script>
-        async function convertCurrency() {
-            const amount = document.getElementById('amount').value;
+        const currencies = {{ currencies | tojson }};
+        let isConverting = false; // Prevent infinite loops
+        let conversionTimeout = null;
+        
+        // Initialize with first conversion
+        window.addEventListener('DOMContentLoaded', function() {
+            convertCurrency('from');
+        });
+        
+        // Add event listeners for real-time conversion
+        document.getElementById('fromAmount').addEventListener('input', function() {
+            debouncedConvert('from');
+        });
+        
+        document.getElementById('toAmount').addEventListener('input', function() {
+            debouncedConvert('to');
+        });
+        
+        document.getElementById('fromCurrency').addEventListener('change', function() {
+            convertCurrency('from');
+        });
+        
+        document.getElementById('toCurrency').addEventListener('change', function() {
+            convertCurrency('from');
+        });
+        
+        // Debounce function to avoid too many API calls while typing
+        function debouncedConvert(direction) {
+            clearTimeout(conversionTimeout);
+            conversionTimeout = setTimeout(() => {
+                convertCurrency(direction);
+            }, 300); // Wait 300ms after user stops typing
+        }
+        
+        async function convertCurrency(direction) {
+            if (isConverting) return;
+            
+            const fromAmountInput = document.getElementById('fromAmount');
+            const toAmountInput = document.getElementById('toAmount');
             const fromCurrency = document.getElementById('fromCurrency').value;
             const toCurrency = document.getElementById('toCurrency').value;
-            const resultDiv = document.getElementById('result');
+            const rateInfoElement = document.getElementById('rateInfo');
+            const exchangeRateDisplay = document.getElementById('exchangeRateDisplay');
             const errorDiv = document.getElementById('error');
             
-            // Hide previous results
-            resultDiv.classList.remove('show');
+            // Determine which input to read from and which to update
+            const sourceInput = direction === 'from' ? fromAmountInput : toAmountInput;
+            const targetInput = direction === 'from' ? toAmountInput : fromAmountInput;
+            const sourceCurrency = direction === 'from' ? fromCurrency : toCurrency;
+            const targetCurrency = direction === 'from' ? toCurrency : fromCurrency;
+            
+            const amount = parseFloat(sourceInput.value);
+            
+            // Hide error
             errorDiv.classList.remove('show');
             
             // Validate input
-            if (!amount || amount <= 0) {
-                errorDiv.textContent = 'Please enter a valid amount';
-                errorDiv.classList.add('show');
+            if (!amount || amount <= 0 || isNaN(amount)) {
+                targetInput.value = '';
+                rateInfoElement.innerHTML = 'Enter an amount to convert';
+                exchangeRateDisplay.classList.remove('show');
                 return;
             }
+            
+            // Show loading indicator
+            targetInput.classList.add('loading');
+            rateInfoElement.innerHTML = '<span class="loading-indicator"></span> Converting...';
+            exchangeRateDisplay.classList.add('show');
+            
+            isConverting = true;
             
             try {
                 const response = await fetch('/api/convert', {
@@ -264,44 +362,42 @@
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        amount: parseFloat(amount),
-                        from_currency: fromCurrency,
-                        to_currency: toCurrency
+                        amount: amount,
+                        from_currency: sourceCurrency,
+                        to_currency: targetCurrency
                     })
                 });
                 
                 const data = await response.json();
                 
                 if (data.success) {
-                    const currencies = {{ currencies | tojson }};
-                    const fromSymbol = currencies[fromCurrency].symbol;
-                    const toSymbol = currencies[toCurrency].symbol;
+                    // Update the target input with converted amount
+                    targetInput.value = data.converted_amount;
                     
-                    resultDiv.innerHTML = `
-                        <div class="result-amount">
-                            ${fromSymbol}${data.amount} ${fromCurrency} = ${toSymbol}${data.converted_amount} ${toCurrency}
-                        </div>
-                        <div class="exchange-rate">
-                            Exchange Rate: 1 ${fromCurrency} = ${data.exchange_rate} ${toCurrency}
-                        </div>
+                    // Update exchange rate display
+                    const fromSymbol = currencies[sourceCurrency].symbol;
+                    const toSymbol = currencies[targetCurrency].symbol;
+                    
+                    rateInfoElement.innerHTML = `
+                        <span class="rate-info">
+                            1 ${sourceCurrency} = ${data.exchange_rate.toFixed(4)} ${targetCurrency}
+                        </span>
                     `;
-                    resultDiv.classList.add('show');
+                    exchangeRateDisplay.classList.add('show');
                 } else {
                     errorDiv.textContent = data.error || 'Conversion failed';
                     errorDiv.classList.add('show');
+                    targetInput.value = '';
                 }
             } catch (error) {
                 errorDiv.textContent = 'Error connecting to server';
                 errorDiv.classList.add('show');
+                targetInput.value = '';
+            } finally {
+                targetInput.classList.remove('loading');
+                isConverting = false;
             }
         }
-        
-        // Allow Enter key to trigger conversion
-        document.getElementById('amount').addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                convertCurrency();
-            }
-        });
     </script>
 </body>
 </html>
