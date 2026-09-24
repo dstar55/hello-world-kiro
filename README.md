@@ -11,6 +11,7 @@ A simple Python Flask web application that displays "Hello, World!" in multiple 
 - 🇪🇸 **Spanish (Español)** - ¡Hola, Mundo! (Currency: EUR €)
 - 🇹🇷 **Turkish (Türkçe)** - Merhaba, Dünya! (Currency: TRY ₺)
 - 🇵🇹 **Portuguese (Português)** - Olá, Mundo! (Currency: EUR €)
+- 🇷🇺 **Russian (Русский)** - Привет, мир! (Currency: RUB ₽)
 - 🇺🇸 **US Dollar** - USD $ (Base currency for conversions)
 
 ## Prerequisites
@@ -80,6 +81,8 @@ The application supports multiple language routes:
 - **Turkish**: `http://localhost:5000/tr`
 - **Portuguese**: `http://localhost:5000/pt`
 
+- **Russian**: `http://localhost:5000/ru`
+
 You can also switch between languages using the language selector buttons on the page.
 
 ## Currency Converter
@@ -90,6 +93,7 @@ The application includes a built-in currency converter with **live exchange rate
 - **EUR** - Euro (€)
 - **GBP** - British Pound (£)
 - **TRY** - Turkish Lira (₺)
+- **RUB** - Russian Ruble (₽)
 
 ### Exchange Rate Source
 
@@ -150,8 +154,8 @@ hello-world-kiro/
 
 ## Features
 
-- **Multi-language support**: English, German, French, Croatian, Spanish, Turkish, and Portuguese
-- **Live currency converter**: Convert between USD, EUR, GBP, and TRY with real-time exchange rates
+- **Multi-language support**: English, German, French, Croatian, Spanish, Turkish, Portuguese, and Russian
+- **Live currency converter**: Convert between USD, EUR, GBP, TRY, and RUB with real-time exchange rates
 - **Exchange rate API**: Powered by [exchangerate-api.com](https://exchangerate-api.com) with multi-source data
 - **Smart caching**: Rates cached for 1 hour to optimize performance
 - **Automatic fallback**: Uses static rates if API is unavailable

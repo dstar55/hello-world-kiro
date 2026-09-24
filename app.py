@@ -70,6 +70,14 @@ LANGUAGES = {
         'currency': 'EUR',
         'currency_symbol': '€',
         'currency_name': 'Euro'
+    },
+    'ru': {
+        'name': 'Русский',
+        'greeting': 'Привет, мир!',
+        'flag': '🇷🇺',
+        'currency': 'RUB',
+        'currency_symbol': '₽',
+        'currency_name': 'Russian Ruble'
     }
 }
 
@@ -276,6 +284,22 @@ def portuguese():
                          current_lang='pt',
                          greeting=LANGUAGES['pt']['greeting'],
                          lang_name=LANGUAGES['pt']['name'],
+                         languages=LANGUAGES,
+                         currencies=get_all_currencies())
+
+
+@app.route('/ru')
+def russian():
+    """
+    Russian language route handler.
+    
+    Returns:
+        Rendered HTML template displaying 'Привет, мир!' in Russian
+    """
+    return render_template('index.html',
+                         current_lang='ru',
+                         greeting=LANGUAGES['ru']['greeting'],
+                         lang_name=LANGUAGES['ru']['name'],
                          languages=LANGUAGES,
                          currencies=get_all_currencies())
 
