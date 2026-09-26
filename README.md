@@ -1,6 +1,16 @@
 # Hello World - Kiro
 
-A simple Python Flask web application that displays "Hello, World!" in multiple languages.
+A simple Python Flask web application that displays "Hello, World!" in multiple languages with **Google OAuth authentication** and **live currency conversion**.
+
+## Features
+
+- 🌍 **Multi-language support**: 8 languages (English, German, French, Croatian, Spanish, Turkish, Portuguese, Russian)
+- 💱 **Live currency converter**: Real-time exchange rates for USD, EUR, GBP, TRY, RUB
+- 🔐 **Google OAuth authentication**: Secure login with Gmail accounts
+- 👥 **User management**: Superadmin approval workflow for new registrations
+- 📊 **Admin dashboard**: Approve/reject users, manage accounts
+- 🔒 **Private pages**: User dashboard and profile pages for authenticated users
+- 📱 **Responsive design**: Works on all devices
 
 ## Supported Languages
 
@@ -18,6 +28,8 @@ A simple Python Flask web application that displays "Hello, World!" in multiple 
 
 - Python 3.8 or higher
 - pip (Python package installer)
+- Google Cloud account (for OAuth credentials)
+- Gmail account (for superadmin setup)
 
 ## Setup Instructions
 
@@ -52,22 +64,139 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+### 5. Configure Google OAuth
+
+#### Get Google OAuth Credentials
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable the **Google+ API** (or Google Identity Services)
+4. Go to **Credentials** → **Create Credentials** → **OAuth client ID**
+5. Choose **Web application**
+6. Add authorized redirect URIs:
+   - For local development: `http://localhost:5000/auth/callback`
+   - For production: `https://your-domain.com/auth/callback`
+7. Copy the **Client ID** and **Client Secret**
+
+#### Set Up Environment Variables
+
+1. Copy the example environment file:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Edit `.env` and fill in your credentials:
+   ```bash
+   # Generate a secure secret key
+   SECRET_KEY=$(python -c "import secrets; print(secrets.token_hex(32))")
+   
+   # Paste your Google OAuth credentials
+   GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+   GOOGLE_CLIENT_SECRET=your-client-secret
+   
+   # Database URL (default is fine for local development)
+   DATABASE_URL=sqlite:///data/users.db
+   ```
+
+**⚠️ Important**: Never commit the `.env` file to version control. It's already in `.gitignore`.
+
+### 6. Set Up Superadmin Account
+
+Before running the application for the first time, create a superadmin account:
+
+```bash
+python setup_superadmin.py
+```
+
+Follow the prompts to enter your Gmail address. This account will have admin privileges to approve new user registrations.
+
+**Additional commands:**
+```bash
+# List all users in the database
+python setup_superadmin.py --list
+
+# Show help
+python setup_superadmin.py --help
+```
+
 ## Running the Application
 
+### Local Development
+
 1. Ensure your virtual environment is activated
-2. Run the application:
+2. Make sure you've completed the OAuth setup and superadmin configuration
+3. Run the application:
 
 ```bash
 python app.py
 ```
 
-3. Open your web browser and navigate to:
+4. Open your web browser and navigate to:
 
 ```
 http://localhost:5000
 ```
 
-You should see "Hello, World!" displayed on the page with a beautiful gradient background.
+### Using Docker
+
+Build and run the application using Docker:
+
+```bash
+# Build the image
+docker build -t hello-world-kiro .
+
+# Run the container
+docker run -p 8000:8000 \
+  -v $(pwd)/data:/app/data \
+  -e SECRET_KEY="your-secret-key" \
+  -e GOOGLE_CLIENT_ID="your-client-id" \
+  -e GOOGLE_CLIENT_SECRET="your-client-secret" \
+  hello-world-kiro
+```
+
+Or use docker-compose (for production deployment):
+
+```bash
+cd deploy
+docker-compose up -d
+```
+
+**Note**: Make sure to set environment variables in your deployment environment or create a `.env` file for docker-compose.
+
+## User Authentication Flow
+
+### For Regular Users
+
+1. **Sign In**: Click "Sign in with Google" button
+2. **Google OAuth**: Authenticate with your Gmail account
+3. **Pending Approval**: After first login, your account will be in "pending" status
+4. **Waiting Page**: You'll see a waiting page while the superadmin reviews your request
+5. **Access Granted**: Once approved, you can access private pages (Dashboard, Profile)
+
+### For Superadmin
+
+1. **Sign In**: Log in with your Gmail account (set up via `setup_superadmin.py`)
+2. **Admin Dashboard**: Access `/admin/dashboard` to manage users
+3. **Approve/Reject**: Review pending registrations and approve or reject them
+4. **User Management**: View all users, their status, and manage accounts
+
+### Private Routes
+
+**Available to all approved users:**
+- `/dashboard` - User dashboard with quick links
+- `/profile` - User profile showing account information
+
+**Available to superadmin only:**
+- `/admin/dashboard` - Admin panel to manage users
+- `/admin/user/<id>/approve` - Approve a user (API)
+- `/admin/user/<id>/reject` - Reject a user (API)
+- `/admin/user/<id>/delete` - Delete a user (API)
+
+**Public routes (no authentication required):**
+- `/` - Homepage (English)
+- `/de`, `/fr`, `/hr`, `/es`, `/tr`, `/pt`, `/ru` - Language-specific pages
+- `/login` - Initiate Google OAuth login
+- `/logout` - Log out current user
 
 ## Available Routes
 
@@ -80,10 +209,9 @@ The application supports multiple language routes:
 - **Spanish**: `http://localhost:5000/es`
 - **Turkish**: `http://localhost:5000/tr`
 - **Portuguese**: `http://localhost:5000/pt`
-
 - **Russian**: `http://localhost:5000/ru`
 
-You can also switch between languages using the language selector buttons on the page.
+You can also switch between languages using the language selector buttons on the page. The authentication header persists across all language pages.
 
 ## Currency Converter
 
@@ -108,15 +236,16 @@ Exchange rates are fetched in real-time from **[exchangerate-api.com](https://ex
 
 ### How to Use
 
-1. Enter the amount you want to convert
-2. Select the source currency from the "From" dropdown
-3. Select the target currency from the "To" dropdown
-4. Click the "Convert" button to see the result
+1. Enter the amount you want to convert in either input box
+2. Select currencies from the dropdowns
+3. **Real-time conversion**: The result updates automatically as you type (300ms debounce)
+4. **Bidirectional**: You can type in either the "From" or "To" box
 5. The converter displays:
-   - Converted amount with currency symbols
+   - Converted amount in real-time
    - Current exchange rate
    - Rate source (live/cached)
-   - Last update timestamp
+
+**Note**: No "Convert" button needed - conversion happens automatically!
 
 ### Technical Details
 
@@ -135,15 +264,30 @@ Press `Ctrl+C` in the terminal where the application is running.
 
 ```
 hello-world-kiro/
-├── app.py              # Main Flask application
-├── templates/          # HTML templates directory
-│   └── index.html     # Homepage template
-├── requirements.txt    # Python dependencies
-├── .kiro/             # Kiro configuration
-│   └── steering/      # Steering rules
-├── .gitignore         # Git ignore rules
-├── LICENSE            # License file
-└── README.md          # This file
+├── app.py                 # Main Flask application with routes
+├── models.py              # Database models (User model)
+├── setup_superadmin.py    # Script to create/update superadmin users
+├── templates/             # HTML templates directory
+│   ├── index.html        # Homepage template (with auth header)
+│   ├── dashboard.html    # User dashboard (private)
+│   ├── profile.html      # User profile (private)
+│   ├── admin_dashboard.html  # Admin panel (superadmin only)
+│   ├── pending.html      # Pending approval page
+│   └── error.html        # Error page template
+├── data/                  # SQLite database directory (gitignored)
+│   └── users.db          # User database (created automatically)
+├── deploy/                # Deployment configuration
+│   └── docker-compose.yml # Docker Compose for production
+├── requirements.txt       # Python dependencies
+├── Dockerfile             # Docker configuration
+├── .env.example          # Example environment variables
+├── .env                  # Your actual environment variables (gitignored)
+├── .dockerignore         # Docker ignore rules
+├── .gitignore            # Git ignore rules
+├── .kiro/                # Kiro configuration
+│   └── steering/         # Steering rules
+├── LICENSE               # License file
+└── README.md             # This file
 ```
 
 ## Technology Stack
@@ -151,21 +295,67 @@ hello-world-kiro/
 - **Framework**: Flask 3.0+
 - **Language**: Python 3.8+
 - **Template Engine**: Jinja2 (built into Flask)
+- **Authentication**: Google OAuth 2.0 (via Authlib)
+- **Database**: SQLite (with Flask-SQLAlchemy ORM)
+- **Session Management**: Flask-Login
+- **Deployment**: Docker + Gunicorn
 
-## Features
+## Database Schema
 
-- **Multi-language support**: English, German, French, Croatian, Spanish, Turkish, Portuguese, and Russian
-- **Live currency converter**: Convert between USD, EUR, GBP, TRY, and RUB with real-time exchange rates
-- **Exchange rate API**: Powered by [exchangerate-api.com](https://exchangerate-api.com) with multi-source data
-- **Smart caching**: Rates cached for 1 hour to optimize performance
-- **Automatic fallback**: Uses static rates if API is unavailable
-- **Language switcher**: Easy navigation between language versions with flag emojis
-- **Clean Flask structure**: Route-based language implementation
-- **Responsive design**: Works on desktop, tablet, and mobile devices
-- **Modern styling**: Beautiful gradient background with centered card layout
-- **Debug mode**: Enabled for development with auto-reload
+### User Table
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | Integer | Primary key |
+| email | String(255) | User's Gmail address (unique, indexed) |
+| name | String(255) | User's full name from Google |
+| profile_picture | String(500) | URL to Google profile picture |
+| role | String(50) | 'superadmin' or 'user' |
+| status | String(50) | 'pending', 'approved', or 'rejected' |
+| created_at | DateTime | Registration timestamp |
+| updated_at | DateTime | Last update timestamp |
+
+## Security Considerations
+
+- **Environment Variables**: Never commit `.env` file - it contains sensitive credentials
+- **Secret Key**: Generate a strong secret key for production: `python -c "import secrets; print(secrets.token_hex(32))"`
+- **HTTPS**: Always use HTTPS in production (OAuth callback requires it for production domains)
+- **Session Security**: Sessions are set to HTTPOnly and SameSite=Lax
+- **Gmail Only**: Only Gmail addresses (`@gmail.com`) are allowed for authentication
+- **Superadmin Protection**: Superadmin accounts cannot be deleted through the UI
+- **Database**: SQLite is fine for small deployments; consider PostgreSQL for production scale
 
 ## Troubleshooting
+
+### Google OAuth Errors
+
+**Error: "redirect_uri_mismatch"**
+- Make sure the redirect URI in Google Cloud Console matches exactly: `http://localhost:5000/auth/callback`
+- For production, update it to your domain: `https://your-domain.com/auth/callback`
+
+**Error: "Access blocked: This app's request is invalid"**
+- Ensure Google+ API (or Google Identity Services) is enabled in Google Cloud Console
+- Verify your OAuth consent screen is configured
+- Check that your credentials are correctly set in `.env`
+
+### Database Issues
+
+**Error: "Unable to open database file"**
+- Make sure the `data/` directory exists: `mkdir -p data`
+- Check file permissions on the data directory
+- Verify `DATABASE_URL` in `.env` points to a writable location
+
+**Need to reset the database?**
+```bash
+# Backup existing database
+mv data/users.db data/users.db.backup
+
+# Database will be recreated on next app start
+python app.py
+
+# Don't forget to run setup_superadmin.py again!
+python setup_superadmin.py
+```
 
 ### Port Already in Use
 
@@ -195,12 +385,30 @@ python3 app.py
 
 ## Development Notes
 
-- The application runs in debug mode by default, which provides:
-  - Automatic reloading when code changes
-  - Detailed error messages
-  - Interactive debugger
+- The application runs in debug mode by default for local development
+- Debug mode provides automatic reloading and detailed error messages
+- Database tables are created automatically on first run
+- Sessions persist for 7 days by default
+- Exchange rates are cached for 1 hour to reduce API calls
 
-**⚠️ Warning**: Never run with `debug=True` in production!
+**⚠️ Production Warnings**:
+- Never run with `debug=True` in production!
+- Always use HTTPS in production
+- Set strong `SECRET_KEY` in production environment
+- Consider using PostgreSQL instead of SQLite for production
+- Set up proper OAuth consent screen verification with Google
+- Configure `SESSION_COOKIE_SECURE=True` when using HTTPS
+
+## Deployment to Production
+
+1. **Set up environment variables** on your server (via GitHub Secrets or server env)
+2. **Update Google OAuth redirect URI** to your production domain
+3. **Run setup_superadmin.py** on the production server to create initial admin
+4. **Use Docker** for consistent deployment:
+   ```bash
+   docker-compose -f deploy/docker-compose.yml up -d
+   ```
+5. **Database persistence**: Ensure the `data/` volume is backed up regularly
 
 ## License
 

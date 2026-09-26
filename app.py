@@ -2,16 +2,141 @@
 Flask Hello World Application
 
 A simple web application that displays 'Hello, World!' in multiple languages.
-Supports: English, German, French, Croatian, Spanish, Turkish, and Portuguese.
-Includes a currency converter with live exchange rates from exchangeratesapi.io.
+Supports: English, German, French, Croatian, Spanish, Turkish, Portuguese, and Russian.
+Includes a currency converter with live exchange rates from exchangerate-api.com.
+Includes Google OAuth authentication with superadmin approval workflow.
 """
 
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, redirect, url_for, session
 import requests
 from datetime import datetime, timedelta
+import os
+import json
+from functools import wraps
+from dotenv import load_dotenv
+from flask_login import LoginManager, login_user, logout_user, current_user, login_required
+from authlib.integrations.flask_client import OAuth
+from models import db, User
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Initialize Flask application
 app = Flask(__name__)
+
+# Configuration
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///data/users.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Session configuration - 7 day persistent sessions
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
+app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
+# Google OAuth configuration
+app.config['GOOGLE_CLIENT_ID'] = os.getenv('GOOGLE_CLIENT_ID')
+app.config['GOOGLE_CLIENT_SECRET'] = os.getenv('GOOGLE_CLIENT_SECRET')
+app.config['GOOGLE_DISCOVERY_URL'] = 'https://accounts.google.com/.well-known/openid-configuration'
+
+# Initialize extensions
+db.init_app(app)
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+login_manager.login_message = 'Please log in to access this page.'
+
+# Initialize OAuth
+oauth = OAuth(app)
+google = oauth.register(
+    name='google',
+    client_id=app.config['GOOGLE_CLIENT_ID'],
+    client_secret=app.config['GOOGLE_CLIENT_SECRET'],
+    server_metadata_url=app.config['GOOGLE_DISCOVERY_URL'],
+    client_kwargs={
+        'scope': 'openid email profile'
+    }
+)
+
+@login_manager.user_loader
+def load_user(user_id):
+    """Load user by ID for Flask-Login."""
+    return User.query.get(int(user_id))
+
+# Create tables on first request
+@app.before_request
+def create_tables():
+    """Create database tables if they don't exist."""
+    if not hasattr(app, '_tables_created'):
+        with app.app_context():
+            # Create data directory if it doesn't exist
+            db_path = app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
+            os.makedirs(os.path.dirname(db_path) if os.path.dirname(db_path) else 'data', exist_ok=True)
+            db.create_all()
+            app._tables_created = True
+
+
+# ============================================================================
+# Authentication Decorators
+# ============================================================================
+
+def approved_required(f):
+    """
+    Decorator to require that user is logged in AND approved.
+    Redirects to pending page if user is authenticated but not approved.
+    Redirects to login if user is not authenticated.
+    """
+    @wraps(f)
+    @login_required
+    def decorated_function(*args, **kwargs):
+        if current_user.is_rejected():
+            # User is rejected, log them out and show error
+            logout_user()
+            return render_template('error.html',
+                                 error_title='Access Denied',
+                                 error_message='Your registration request has been rejected. Please contact the administrator.',
+                                 languages=LANGUAGES,
+                                 current_lang='en'), 403
+        
+        if current_user.is_pending():
+            # User is pending approval
+            return redirect(url_for('pending_approval'))
+        
+        if not current_user.is_approved():
+            # User has some other status
+            return render_template('error.html',
+                                 error_title='Access Denied',
+                                 error_message='You do not have permission to access this page.',
+                                 languages=LANGUAGES,
+                                 current_lang='en'), 403
+        
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def admin_required(f):
+    """
+    Decorator to require that user is logged in, approved, AND is a superadmin.
+    Combines approved_required with superadmin check.
+    """
+    @wraps(f)
+    @approved_required
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_superadmin():
+            return render_template('error.html',
+                                 error_title='Admin Access Required',
+                                 error_message='You must be a superadmin to access this page.',
+                                 languages=LANGUAGES,
+                                 current_lang='en'), 403
+        
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+# ============================================================================
+# Helper Functions
+# ============================================================================
 
 # Language configurations with currency data
 LANGUAGES = {
@@ -176,6 +301,262 @@ def get_all_currencies():
     return currencies
 
 
+# ============================================================================
+# Authentication Routes
+# ============================================================================
+
+@app.route('/login')
+def login():
+    """Initiate Google OAuth login flow."""
+    # Store the page user was trying to access
+    next_page = request.args.get('next')
+    if next_page:
+        session['next_url'] = next_page
+    
+    # Build redirect URI
+    redirect_uri = url_for('auth_callback', _external=True)
+    return google.authorize_redirect(redirect_uri)
+
+
+@app.route('/auth/callback')
+def auth_callback():
+    """Handle Google OAuth callback."""
+    try:
+        # Get authorization token
+        token = google.authorize_access_token()
+        
+        # Get user info from Google
+        resp = google.get('https://openidconnect.googleapis.com/v1/userinfo')
+        user_info = resp.json()
+        
+        # Extract user details
+        email = user_info.get('email')
+        name = user_info.get('name')
+        picture = user_info.get('picture')
+        
+        # Validate email domain - only Gmail addresses allowed
+        if not email or not email.endswith('@gmail.com'):
+            return render_template('error.html',
+                                 error_title='Invalid Email Domain',
+                                 error_message='Only Gmail addresses are allowed. Please sign in with a Gmail account.',
+                                 languages=LANGUAGES,
+                                 current_lang='en')
+        
+        # Check if user exists
+        user = User.query.filter_by(email=email).first()
+        
+        if not user:
+            # Create new user with pending status
+            user = User(
+                email=email,
+                name=name,
+                profile_picture=picture,
+                role='user',
+                status='pending'
+            )
+            db.session.add(user)
+            db.session.commit()
+            print(f"✓ New user created: {email} (status: pending)")
+        else:
+            # Update user info
+            user.name = name
+            user.profile_picture = picture
+            db.session.commit()
+            print(f"✓ User login: {email} (status: {user.status})")
+        
+        # Log in the user (even if pending)
+        login_user(user, remember=True, duration=timedelta(days=7))
+        session.permanent = True
+        
+        # Redirect to original destination or home
+        next_url = session.pop('next_url', None)
+        if next_url:
+            return redirect(next_url)
+        
+        # If user is pending, redirect to pending page
+        if user.is_pending():
+            return redirect(url_for('pending_approval'))
+        
+        # If user is rejected, show error
+        if user.is_rejected():
+            logout_user()
+            return render_template('error.html',
+                                 error_title='Access Denied',
+                                 error_message='Your registration request has been rejected. Please contact the administrator.',
+                                 languages=LANGUAGES,
+                                 current_lang='en')
+        
+        # Approved users go to dashboard
+        return redirect(url_for('dashboard'))
+        
+    except Exception as e:
+        print(f"✗ OAuth error: {e}")
+        return render_template('error.html',
+                             error_title='Authentication Error',
+                             error_message=f'An error occurred during authentication: {str(e)}',
+                             languages=LANGUAGES,
+                             current_lang='en')
+
+
+@app.route('/logout')
+def logout():
+    """Log out the current user."""
+    logout_user()
+    return redirect(url_for('index'))
+
+
+@app.route('/pending')
+def pending_approval():
+    """Page shown to users awaiting approval."""
+    if not current_user.is_authenticated:
+        return redirect(url_for('login'))
+    
+    if not current_user.is_pending():
+        # User is not pending, redirect appropriately
+        if current_user.is_approved():
+            return redirect(url_for('dashboard'))
+        elif current_user.is_rejected():
+            logout_user()
+            return render_template('error.html',
+                                 error_title='Access Denied',
+                                 error_message='Your registration request has been rejected.',
+                                 languages=LANGUAGES,
+                                 current_lang='en')
+    
+    return render_template('pending.html',
+                         user=current_user,
+                         languages=LANGUAGES,
+                         current_lang='en')
+
+
+# ============================================================================
+# Private User Pages
+# ============================================================================
+
+@app.route('/dashboard')
+@approved_required
+def dashboard():
+    """User dashboard - accessible to approved users."""
+    return render_template('dashboard.html',
+                         user=current_user,
+                         languages=LANGUAGES,
+                         current_lang='en')
+
+
+@app.route('/profile')
+@approved_required
+def profile():
+    """User profile page - accessible to approved users."""
+    return render_template('profile.html',
+                         user=current_user,
+                         languages=LANGUAGES,
+                         current_lang='en')
+
+
+# ============================================================================
+# Admin Pages
+# ============================================================================
+
+@app.route('/admin/dashboard')
+@admin_required
+def admin_dashboard():
+    """Admin dashboard - shows all users and pending approvals."""
+    # Get all users, sorted by status (pending first) then by creation date
+    all_users = User.query.order_by(
+        db.case(
+            (User.status == 'pending', 0),
+            (User.status == 'approved', 1),
+            (User.status == 'rejected', 2),
+            else_=3
+        ),
+        User.created_at.desc()
+    ).all()
+    
+    # Count users by status
+    pending_count = User.query.filter_by(status='pending').count()
+    approved_count = User.query.filter_by(status='approved').count()
+    rejected_count = User.query.filter_by(status='rejected').count()
+    
+    return render_template('admin_dashboard.html',
+                         users=all_users,
+                         pending_count=pending_count,
+                         approved_count=approved_count,
+                         rejected_count=rejected_count,
+                         languages=LANGUAGES,
+                         current_lang='en')
+
+
+@app.route('/admin/user/<int:user_id>/approve', methods=['POST'])
+@admin_required
+def approve_user(user_id):
+    """Approve a pending user."""
+    user = User.query.get_or_404(user_id)
+    
+    if user.id == current_user.id:
+        return jsonify({'success': False, 'error': 'Cannot modify your own status'}), 400
+    
+    user.status = 'approved'
+    db.session.commit()
+    
+    print(f"✓ User approved: {user.email} by {current_user.email}")
+    
+    return jsonify({
+        'success': True,
+        'message': f'User {user.email} has been approved',
+        'user': user.to_dict()
+    })
+
+
+@app.route('/admin/user/<int:user_id>/reject', methods=['POST'])
+@admin_required
+def reject_user(user_id):
+    """Reject a pending user."""
+    user = User.query.get_or_404(user_id)
+    
+    if user.id == current_user.id:
+        return jsonify({'success': False, 'error': 'Cannot modify your own status'}), 400
+    
+    user.status = 'rejected'
+    db.session.commit()
+    
+    print(f"✓ User rejected: {user.email} by {current_user.email}")
+    
+    return jsonify({
+        'success': True,
+        'message': f'User {user.email} has been rejected',
+        'user': user.to_dict()
+    })
+
+
+@app.route('/admin/user/<int:user_id>/delete', methods=['POST'])
+@admin_required
+def delete_user(user_id):
+    """Delete a user."""
+    user = User.query.get_or_404(user_id)
+    
+    if user.id == current_user.id:
+        return jsonify({'success': False, 'error': 'Cannot delete yourself'}), 400
+    
+    if user.is_superadmin():
+        return jsonify({'success': False, 'error': 'Cannot delete a superadmin'}), 400
+    
+    email = user.email
+    db.session.delete(user)
+    db.session.commit()
+    
+    print(f"✓ User deleted: {email} by {current_user.email}")
+    
+    return jsonify({
+        'success': True,
+        'message': f'User {email} has been deleted'
+    })
+
+
+# ============================================================================
+# Main Language Routes
+# ============================================================================
+
+
 @app.route('/')
 def index():
     """
@@ -189,7 +570,8 @@ def index():
                          greeting=LANGUAGES['en']['greeting'],
                          lang_name=LANGUAGES['en']['name'],
                          languages=LANGUAGES,
-                         currencies=get_all_currencies())
+                         currencies=get_all_currencies(),
+                         current_user=current_user)
 
 
 @app.route('/de')
@@ -205,7 +587,8 @@ def german():
                          greeting=LANGUAGES['de']['greeting'],
                          lang_name=LANGUAGES['de']['name'],
                          languages=LANGUAGES,
-                         currencies=get_all_currencies())
+                         currencies=get_all_currencies(),
+                         current_user=current_user)
 
 
 @app.route('/fr')
@@ -221,7 +604,8 @@ def french():
                          greeting=LANGUAGES['fr']['greeting'],
                          lang_name=LANGUAGES['fr']['name'],
                          languages=LANGUAGES,
-                         currencies=get_all_currencies())
+                         currencies=get_all_currencies(),
+                         current_user=current_user)
 
 
 @app.route('/hr')
@@ -237,7 +621,8 @@ def croatian():
                          greeting=LANGUAGES['hr']['greeting'],
                          lang_name=LANGUAGES['hr']['name'],
                          languages=LANGUAGES,
-                         currencies=get_all_currencies())
+                         currencies=get_all_currencies(),
+                         current_user=current_user)
 
 
 @app.route('/es')
@@ -253,7 +638,8 @@ def spanish():
                          greeting=LANGUAGES['es']['greeting'],
                          lang_name=LANGUAGES['es']['name'],
                          languages=LANGUAGES,
-                         currencies=get_all_currencies())
+                         currencies=get_all_currencies(),
+                         current_user=current_user)
 
 
 @app.route('/tr')
@@ -269,7 +655,8 @@ def turkish():
                          greeting=LANGUAGES['tr']['greeting'],
                          lang_name=LANGUAGES['tr']['name'],
                          languages=LANGUAGES,
-                         currencies=get_all_currencies())
+                         currencies=get_all_currencies(),
+                         current_user=current_user)
 
 
 @app.route('/pt')
@@ -285,7 +672,8 @@ def portuguese():
                          greeting=LANGUAGES['pt']['greeting'],
                          lang_name=LANGUAGES['pt']['name'],
                          languages=LANGUAGES,
-                         currencies=get_all_currencies())
+                         currencies=get_all_currencies(),
+                         current_user=current_user)
 
 
 @app.route('/ru')
@@ -301,7 +689,8 @@ def russian():
                          greeting=LANGUAGES['ru']['greeting'],
                          lang_name=LANGUAGES['ru']['name'],
                          languages=LANGUAGES,
-                         currencies=get_all_currencies())
+                         currencies=get_all_currencies(),
+                         current_user=current_user)
 
 
 @app.route('/api/convert', methods=['POST'])

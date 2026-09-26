@@ -10,3 +10,8 @@ README.md
 LICENSE
 Dockerfile
 .dockerignore
+.env
+.env.local
+data/
+*.db
+setup_superadmin.py

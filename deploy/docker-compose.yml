@@ -7,3 +7,13 @@ services:
     ports:
       # 80 is taken by the VM's existing nginx, so the app is served on 8080
       - "8080:8000"
+    volumes:
+      # Persist SQLite database across container restarts
+      - ./data:/app/data
+    environment:
+      # These should be set via GitHub Secrets and passed by the deployment workflow
+      # or set directly in the VM's environment
+      - SECRET_KEY=${SECRET_KEY}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - DATABASE_URL=sqlite:///data/users.db
