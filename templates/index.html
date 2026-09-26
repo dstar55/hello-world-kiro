@@ -80,18 +80,18 @@
         .converter-title {
             font-size: 1.5rem;
             color: #333;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
         }
         .converter-form {
             display: flex;
             flex-direction: column;
-            gap: 1.5rem;
+            gap: 1rem;
             max-width: 600px;
             margin: 0 auto;
         }
         .conversion-row {
             display: flex;
-            gap: 1rem;
+            gap: 0.5rem;
             align-items: flex-end;
         }
         .currency-input-group {
@@ -217,16 +217,6 @@
             <em>{{ lang_name }}</em>
         </div>
         
-        <div class="language-switcher">
-            {% for code, lang in languages.items() %}
-                <a href="/{% if code != 'en' %}{{ code }}{% endif %}" 
-                   class="lang-btn {% if code == current_lang %}active{% endif %}">
-                    <span class="flag">{{ lang.flag }}</span>
-                    <span>{{ lang.name }}</span>
-                </a>
-            {% endfor %}
-        </div>
-        
         <!-- Currency Converter -->
         <div class="currency-converter">
             <h2 class="converter-title">💱 Currency Converter</h2>
@@ -280,6 +270,16 @@
                 
                 <div id="error" class="error"></div>
             </div>
+        </div>
+        
+        <div class="language-switcher">
+            {% for code, lang in languages.items() %}
+                <a href="/{% if code != 'en' %}{{ code }}{% endif %}" 
+                   class="lang-btn {% if code == current_lang %}active{% endif %}">
+                    <span class="flag">{{ lang.flag }}</span>
+                    <span>{{ lang.name }}</span>
+                </a>
+            {% endfor %}
         </div>
     </div>
     
