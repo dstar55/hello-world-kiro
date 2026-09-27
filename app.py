@@ -2,16 +2,30 @@
 Flask Hello World Application
 
 A simple web application that displays 'Hello, World!' in multiple languages.
-Supports: English, German, French, Croatian, Spanish, Turkish, and Portuguese.
-Includes a currency converter with live exchange rates from exchangeratesapi.io.
+Supports: English, German, French, Croatian, Spanish, Turkish, Portuguese, and Russian.
+Includes a currency converter with live exchange rates from exchangerate-api.com.
+Includes text transformation API for autonomous agents.
 """
 
 from flask import Flask, render_template, jsonify, request
 import requests
 from datetime import datetime, timedelta
+import os
+from dotenv import load_dotenv
+from services.cache_service import cache
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Initialize Flask application
 app = Flask(__name__)
+
+# Configuration
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
+
+# Register API blueprints
+from api.text import text_bp
+app.register_blueprint(text_bp)
 
 # Language configurations with currency data
 LANGUAGES = {
@@ -355,6 +369,71 @@ def convert_currency():
         return jsonify({'error': str(e)}), 500
 
 
+# ============================================================================
+# Health Check & System Routes
+# ============================================================================
+
+@app.route('/health')
+def health():
+    """
+    Health check endpoint for monitoring
+    
+    Returns:
+        JSON with system health status
+    """
+    redis_status = "connected" if cache.health_check() else "disconnected"
+    cache_stats = cache.get_stats()
+    
+    return jsonify({
+        'status': 'healthy',
+        'redis': redis_status,
+        'cache_stats': cache_stats,
+        'timestamp': datetime.now().isoformat(),
+        'version': '1.1.0'
+    })
+
+
+@app.route('/api')
+def api_info():
+    """
+    API information and available endpoints
+    
+    Returns:
+        JSON with API documentation
+    """
+    return jsonify({
+        'name': 'Hello World API',
+        'version': '1.1.0',
+        'endpoints': {
+            'text_api': {
+                'base_url': '/api/text',
+                'documentation': 'Text transformation and analysis endpoints',
+                'available_operations': [
+                    'base64/encode',
+                    'base64/decode',
+                    'hash',
+                    'normalize',
+                    'stats',
+                    'extract',
+                    'case-convert',
+                    'tokenize',
+                    'detect-language',
+                    'sentiment'
+                ]
+            },
+            'currency_api': {
+                'base_url': '/api/convert',
+                'documentation': 'Currency conversion with live rates'
+            },
+            'health_check': {
+                'base_url': '/health',
+                'documentation': 'System health status'
+            }
+        }
+    })
+
+
 if __name__ == '__main__':
     # Run the application on localhost:5000 in debug mode
     app.run(host='localhost', port=5000, debug=True)
+
