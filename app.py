@@ -433,6 +433,17 @@ def api_info():
     })
 
 
+@app.route('/api-test')
+def api_test():
+    """
+    Interactive API testing page
+    
+    Returns:
+        HTML page for testing text API endpoints
+    """
+    return render_template('api_test.html')
+
+
 if __name__ == '__main__':
     # Run the application on localhost:5000 in debug mode
     app.run(host='localhost', port=5000, debug=True)

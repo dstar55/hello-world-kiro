@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text API Tester - Hello World</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        .header p {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+        .nav {
+            background: #f8f9fa;
+            padding: 1rem 2rem;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .nav a {
+            text-decoration: none;
+            color: #667eea;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: all 0.3s;
+            display: inline-block;
+            margin-right: 1rem;
+        }
+        .nav a:hover {
+            background: #667eea;
+            color: white;
+        }
+        .content {
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        .input-section, .output-section {
+            display: flex;
+            flex-direction: column;
+        }
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        textarea {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+            min-height: 150px;
+            transition: border-color 0.3s;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            background: white;
+            transition: border-color 0.3s;
+        }
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .options-group {
+            display: none;
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+        .options-group.active {
+            display: block;
+        }
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: normal;
+            cursor: pointer;
+        }
+        .checkbox-label input[type="checkbox"] {
+            width: auto;
+            cursor: pointer;
+        }
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        .output-box {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            flex: 1;
+            overflow-y: auto;
+            max-height: 500px;
+        }
+        .output-box.success {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+        .output-box.error {
+            border-color: #dc3545;
+            background: #f8d7da;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+        .loading.active {
+            display: block;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .stats {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        .stat-badge {
+            background: #667eea;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .examples {
+            background: #e7f3ff;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+        }
+        .examples strong {
+            color: #0066cc;
+        }
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Text API Tester</h1>
+            <p>Test all text transformation endpoints in real-time</p>
+        </div>
+        
+        <div class="nav">
+            <a href="/">🏠 Home</a>
+            <a href="/health" target="_blank">❤️ Health Check</a>
+            <a href="/api" target="_blank">📚 API Info</a>
+        </div>
+        
+        <div class="content">
+            <!-- Input Section -->
+            <div class="input-section">
+                <div class="section-title">
+                    <span>📝</span>
+                    <span>Input</span>
+                </div>
+                
+                <div class="form-group">
+                    <label for="operation">Select Operation:</label>
+                    <select id="operation" onchange="updateOptions()">
+                        <optgroup label="Encoding/Decoding">
+                            <option value="base64-encode">Base64 Encode</option>
+                            <option value="base64-decode">Base64 Decode</option>
+                        </optgroup>
+                        <optgroup label="Hashing & Security">
+                            <option value="hash">Hash Text (MD5, SHA-256, SHA-512)</option>
+                        </optgroup>
+                        <optgroup label="Text Analysis">
+                            <option value="stats">Text Statistics</option>
+                            <option value="normalize">Normalize Text</option>
+                            <option value="extract">Extract URLs/Emails/Phones</option>
+                        </optgroup>
+                        <optgroup label="Case Conversion">
+                            <option value="case-upper">Convert to UPPERCASE</option>
+                            <option value="case-lower">Convert to lowercase</option>
+                            <option value="case-title">Convert to Title Case</option>
+                            <option value="case-camel">Convert to camelCase</option>
+                            <option value="case-pascal">Convert to PascalCase</option>
+                            <option value="case-snake">Convert to snake_case</option>
+                            <option value="case-kebab">Convert to kebab-case</option>
+                        </optgroup>
+                        <optgroup label="AI/ML (Phase 1B - Placeholders)">
+                            <option value="tokenize">Tokenize (Count Tokens)</option>
+                            <option value="detect-language">Detect Language</option>
+                            <option value="sentiment">Sentiment Analysis</option>
+                        </optgroup>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="inputText">Input Text:</label>
+                    <textarea id="inputText" placeholder="Enter your text here...">Hello World! This is a test of the text API.</textarea>
+                </div>
+                
+                <!-- Hash Options -->
+                <div id="hashOptions" class="options-group">
+                    <label>Hash Algorithms:</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" value="md5" checked> MD5
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" value="sha1"> SHA-1
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" value="sha256" checked> SHA-256
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" value="sha512"> SHA-512
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Normalize Options -->
+                <div id="normalizeOptions" class="options-group">
+                    <label>Normalization Options:</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="opt-lowercase"> Lowercase
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="opt-remove-spaces" checked> Remove Extra Spaces
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="opt-remove-punct"> Remove Punctuation
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="opt-remove-numbers"> Remove Numbers
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="opt-strip" checked> Strip Whitespace
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Extract Options -->
+                <div id="extractOptions" class="options-group">
+                    <label>Extract Types:</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" value="urls" checked> URLs
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" value="emails" checked> Emails
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" value="phones" checked> Phone Numbers
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Tokenize Options -->
+                <div id="tokenizeOptions" class="options-group">
+                    <label for="llmModel">LLM Model:</label>
+                    <select id="llmModel">
+                        <option value="gpt-4">GPT-4</option>
+                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                        <option value="claude">Claude</option>
+                    </select>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="testAPI()">
+                        <span>▶️</span>
+                        <span>Test API</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearOutput()">
+                        <span>🗑️</span>
+                        <span>Clear</span>
+                    </button>
+                </div>
+                
+                <div id="examples" class="examples">
+                    <strong>💡 Tip:</strong> <span id="exampleText">Try different operations to see instant results!</span>
+                </div>
+            </div>
+            
+            <!-- Output Section -->
+            <div class="output-section">
+                <div class="section-title">
+                    <span>📊</span>
+                    <span>Output</span>
+                </div>
+                
+                <div id="loading" class="loading">
+                    <div class="spinner"></div>
+                    <p>Processing...</p>
+                </div>
+                
+                <div id="output" class="output-box">
+                    👈 Select an operation and click "Test API" to see results here
+                </div>
+                
+                <div id="stats" class="stats" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const examples = {
+            'base64-encode': 'Try: "Hello World" or "Secret message 🔐"',
+            'base64-decode': 'Try: "SGVsbG8gV29ybGQ=" (decodes to "Hello World")',
+            'hash': 'Useful for: content deduplication, cache keys, data integrity',
+            'stats': 'Paste any text to analyze word count, reading time, etc.',
+            'normalize': 'Try: "  Extra   spaces   everywhere  " to clean up text',
+            'extract': 'Try: "Email me at test@example.com or visit https://example.com"',
+            'case-camel': 'Try: "hello world example" → "helloWorldExample"',
+            'tokenize': 'Useful for: estimating LLM API costs before calling',
+            'detect-language': 'Try: "Bonjour le monde" or "Hola mundo"',
+            'sentiment': 'Try: "I love this product!" or "This is terrible"'
+        };
+        
+        function updateOptions() {
+            const operation = document.getElementById('operation').value;
+            
+            // Hide all option groups
+            document.querySelectorAll('.options-group').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            // Show relevant options
+            if (operation === 'hash') {
+                document.getElementById('hashOptions').classList.add('active');
+            } else if (operation === 'normalize') {
+                document.getElementById('normalizeOptions').classList.add('active');
+            } else if (operation === 'extract') {
+                document.getElementById('extractOptions').classList.add('active');
+            } else if (operation === 'tokenize') {
+                document.getElementById('tokenizeOptions').classList.add('active');
+            }
+            
+            // Update example text
+            const exampleEl = document.getElementById('exampleText');
+            exampleEl.textContent = examples[operation] || 'Try different operations!';
+        }
+        
+        async function testAPI() {
+            const operation = document.getElementById('operation').value;
+            const inputText = document.getElementById('inputText').value;
+            const outputEl = document.getElementById('output');
+            const loadingEl = document.getElementById('loading');
+            const statsEl = document.getElementById('stats');
+            
+            if (!inputText.trim()) {
+                outputEl.textContent = '⚠️ Please enter some text to process';
+                outputEl.className = 'output-box error';
+                return;
+            }
+            
+            // Show loading
+            loadingEl.classList.add('active');
+            outputEl.textContent = '';
+            outputEl.className = 'output-box';
+            statsEl.style.display = 'none';
+            
+            try {
+                const startTime = performance.now();
+                let endpoint, payload;
+                
+                // Determine endpoint and payload
+                if (operation === 'base64-encode') {
+                    endpoint = '/api/text/base64/encode';
+                    payload = { text: inputText };
+                } else if (operation === 'base64-decode') {
+                    endpoint = '/api/text/base64/decode';
+                    payload = { encoded: inputText };
+                } else if (operation === 'hash') {
+                    endpoint = '/api/text/hash';
+                    const algorithms = Array.from(document.querySelectorAll('#hashOptions input:checked'))
+                        .map(cb => cb.value);
+                    payload = { text: inputText, algorithms };
+                } else if (operation === 'stats') {
+                    endpoint = '/api/text/stats';
+                    payload = { text: inputText };
+                } else if (operation === 'normalize') {
+                    endpoint = '/api/text/normalize';
+                    payload = {
+                        text: inputText,
+                        options: {
+                            lowercase: document.getElementById('opt-lowercase').checked,
+                            remove_extra_spaces: document.getElementById('opt-remove-spaces').checked,
+                            remove_punctuation: document.getElementById('opt-remove-punct').checked,
+                            remove_numbers: document.getElementById('opt-remove-numbers').checked,
+                            strip: document.getElementById('opt-strip').checked
+                        }
+                    };
+                } else if (operation === 'extract') {
+                    endpoint = '/api/text/extract';
+                    const types = Array.from(document.querySelectorAll('#extractOptions input:checked'))
+                        .map(cb => cb.value);
+                    payload = { text: inputText, extract_types: types };
+                } else if (operation.startsWith('case-')) {
+                    endpoint = '/api/text/case-convert';
+                    const caseType = operation.replace('case-', '');
+                    payload = { text: inputText, case_type: caseType };
+                } else if (operation === 'tokenize') {
+                    endpoint = '/api/text/tokenize';
+                    const model = document.getElementById('llmModel').value;
+                    payload = { text: inputText, model };
+                } else if (operation === 'detect-language') {
+                    endpoint = '/api/text/detect-language';
+                    payload = { text: inputText };
+                } else if (operation === 'sentiment') {
+                    endpoint = '/api/text/sentiment';
+                    payload = { text: inputText };
+                }
+                
+                // Make API call
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                const endTime = performance.now();
+                const clientTime = Math.round(endTime - startTime);
+                
+                // Display result
+                loadingEl.classList.remove('active');
+                
+                if (data.success) {
+                    outputEl.className = 'output-box success';
+                    outputEl.textContent = JSON.stringify(data, null, 2);
+                    
+                    // Show stats
+                    statsEl.innerHTML = `
+                        <span class="stat-badge">✅ Success</span>
+                        <span class="stat-badge">⚡ Server: ${data.processing_time_ms || 0}ms</span>
+                        <span class="stat-badge">🌐 Client: ${clientTime}ms</span>
+                        ${data.cached ? '<span class="stat-badge">💾 Cached</span>' : ''}
+                    `;
+                    statsEl.style.display = 'flex';
+                } else {
+                    outputEl.className = 'output-box error';
+                    outputEl.textContent = `❌ Error:\n\n${JSON.stringify(data, null, 2)}`;
+                }
+                
+            } catch (error) {
+                loadingEl.classList.remove('active');
+                outputEl.className = 'output-box error';
+                outputEl.textContent = `❌ Network Error:\n\n${error.message}\n\nMake sure the API server is running.`;
+            }
+        }
+        
+        function clearOutput() {
+            document.getElementById('output').textContent = '👈 Select an operation and click "Test API"';
+            document.getElementById('output').className = 'output-box';
+            document.getElementById('stats').style.display = 'none';
+        }
+        
+        // Initialize
+        updateOptions();
+    </script>
+</body>
+</html>
