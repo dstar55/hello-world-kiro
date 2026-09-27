@@ -371,15 +371,13 @@ def case_convert():
 @text_bp.route('/tokenize', methods=['POST'])
 def tokenize():
     """
-    Count tokens for LLM models
-    
-    NOTE: Phase 1B implementation
+    Count tokens for LLM models using tiktoken
     
     Request:
         POST /api/text/tokenize
         {
             "text": "Hello World",
-            "model": "gpt-4"  // gpt-3.5-turbo, gpt-4, claude, etc.
+            "model": "gpt-4"  // gpt-4, gpt-4o, gpt-3.5-turbo, claude, etc.
         }
     
     Response:
@@ -387,6 +385,7 @@ def tokenize():
             "success": true,
             "text": "Hello World",
             "model": "gpt-4",
+            "encoding": "cl100k_base",
             "token_count": 2,
             "estimated_cost_usd": 0.00006,
             "processing_time_ms": 15
@@ -413,9 +412,7 @@ def tokenize():
 @text_bp.route('/detect-language', methods=['POST'])
 def detect_language():
     """
-    Detect language of text
-    
-    NOTE: Phase 1B implementation
+    Detect language of text using langdetect
     
     Request:
         POST /api/text/detect-language
@@ -430,7 +427,8 @@ def detect_language():
             "language": {
                 "code": "fr",
                 "name": "French",
-                "confidence": 0.9999
+                "confidence": 0.9999,
+                "alternatives": [...]  // included if confidence < 0.95
             },
             "processing_time_ms": 25,
             "cached": false
@@ -475,9 +473,7 @@ def detect_language():
 @text_bp.route('/sentiment', methods=['POST'])
 def sentiment():
     """
-    Analyze sentiment of text
-    
-    NOTE: Phase 1B implementation
+    Analyze sentiment of text using VADER
     
     Request:
         POST /api/text/sentiment
@@ -494,7 +490,7 @@ def sentiment():
                 "positive": 0.75,
                 "negative": 0.0,
                 "neutral": 0.25,
-                "compound": 0.65
+                "compound": 0.6369
             },
             "processing_time_ms": 12,
             "cached": false

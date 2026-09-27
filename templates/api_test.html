@@ -301,10 +301,10 @@
                             <option value="case-snake">Convert to snake_case</option>
                             <option value="case-kebab">Convert to kebab-case</option>
                         </optgroup>
-                        <optgroup label="AI/ML (Phase 1B - Placeholders)">
-                            <option value="tokenize">Tokenize (Count Tokens)</option>
+                        <optgroup label="AI/ML (Phase 1B)">
+                            <option value="tokenize">Tokenize (Count Tokens for LLMs)</option>
                             <option value="detect-language">Detect Language</option>
-                            <option value="sentiment">Sentiment Analysis</option>
+                            <option value="sentiment">Sentiment Analysis (VADER)</option>
                         </optgroup>
                     </select>
                 </div>
@@ -375,10 +375,16 @@
                 <div id="tokenizeOptions" class="options-group">
                     <label for="llmModel">LLM Model:</label>
                     <select id="llmModel">
-                        <option value="gpt-4">GPT-4</option>
-                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                        <option value="claude">Claude</option>
+                        <option value="gpt-4">GPT-4 (cl100k_base)</option>
+                        <option value="gpt-4o">GPT-4o (o200k_base)</option>
+                        <option value="gpt-4-turbo">GPT-4 Turbo (cl100k_base)</option>
+                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo (cl100k_base)</option>
+                        <option value="claude">Claude (cl100k_base)</option>
+                        <option value="claude-3">Claude 3 (cl100k_base)</option>
                     </select>
+                    <div class="examples" style="margin-top: 0.5rem;">
+                        <small>Token counting helps estimate API costs before making LLM calls</small>
+                    </div>
                 </div>
                 
                 <div class="button-group">
@@ -427,9 +433,9 @@
             'normalize': 'Try: "  Extra   spaces   everywhere  " to clean up text',
             'extract': 'Try: "Email me at test@example.com or visit https://example.com"',
             'case-camel': 'Try: "hello world example" → "helloWorldExample"',
-            'tokenize': 'Useful for: estimating LLM API costs before calling',
-            'detect-language': 'Try: "Bonjour le monde" or "Hola mundo"',
-            'sentiment': 'Try: "I love this product!" or "This is terrible"'
+            'tokenize': 'Count tokens for GPT-4, Claude, etc. - helps estimate API costs',
+            'detect-language': 'Try: "Bonjour le monde" (French), "Hola mundo" (Spanish), "こんにちは" (Japanese)',
+            'sentiment': 'VADER analysis - Try: "I love this!" (positive), "This is terrible" (negative), "It\'s okay" (neutral)'
         };
         
         function updateOptions() {

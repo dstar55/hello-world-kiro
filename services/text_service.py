@@ -10,6 +10,28 @@ import hashlib
 import re
 from typing import Dict, List
 
+# Phase 1B: ML imports
+try:
+    import tiktoken
+    TIKTOKEN_AVAILABLE = True
+except ImportError:
+    TIKTOKEN_AVAILABLE = False
+
+try:
+    from langdetect import detect, detect_langs, LangDetectException
+    LANGDETECT_AVAILABLE = True
+except ImportError:
+    LANGDETECT_AVAILABLE = False
+
+try:
+    from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+    VADER_AVAILABLE = True
+    # Initialize VADER analyzer once
+    _vader_analyzer = SentimentIntensityAnalyzer()
+except ImportError:
+    VADER_AVAILABLE = False
+    _vader_analyzer = None
+
 
 class TextService:
     """Text processing and transformation service"""
@@ -265,46 +287,92 @@ class TextService:
             raise ValueError(f"Unknown case type: {case_type}")
     
     # ========================================================================
-    # Group B: Tokenization (Phase 1B - Placeholder)
+    # Group B: Tokenization (Phase 1B)
     # ========================================================================
     
     def tokenize(self, text: str, model: str) -> Dict:
         """
-        Count tokens for LLM models
-        
-        NOTE: Phase 1B implementation - currently placeholder
-        Will use tiktoken and transformers for accurate counting
+        Count tokens for LLM models using tiktoken
         
         Args:
             text: Text to tokenize
-            model: Model name (gpt-4, gpt-3.5-turbo, claude, etc.)
+            model: Model name (gpt-4, gpt-4o, gpt-3.5-turbo, claude, etc.)
         
         Returns:
             Dict with token count and cost estimate
         """
-        # Placeholder - rough word-based estimate
-        # Will be replaced with proper tokenization in Phase 1B
-        word_count = len(text.split())
-        estimated_tokens = int(word_count * 1.3)  # Rough approximation
+        if not TIKTOKEN_AVAILABLE:
+            # Fallback to word-based estimation
+            word_count = len(text.split())
+            estimated_tokens = int(word_count * 1.3)
+            return {
+                'text': text,
+                'model': model,
+                'token_count': estimated_tokens,
+                'estimated_cost_usd': 0.0,
+                'note': 'tiktoken not available - using word-based estimation'
+            }
         
-        return {
-            'text': text,
-            'model': model,
-            'token_count': estimated_tokens,
-            'estimated_cost_usd': 0.0,
-            'note': 'Placeholder implementation - Phase 1B will use proper tokenizers'
+        # Map model names to tiktoken encodings
+        model_mapping = {
+            'gpt-4': 'cl100k_base',
+            'gpt-4o': 'o200k_base',
+            'gpt-4-turbo': 'cl100k_base',
+            'gpt-3.5-turbo': 'cl100k_base',
+            'claude': 'cl100k_base',  # Claude uses similar tokenization
+            'claude-3': 'cl100k_base',
+            'text-davinci-003': 'p50k_base',
+            'text-davinci-002': 'p50k_base',
         }
+        
+        # Get encoding name
+        encoding_name = model_mapping.get(model, 'cl100k_base')
+        
+        try:
+            encoding = tiktoken.get_encoding(encoding_name)
+            tokens = encoding.encode(text)
+            token_count = len(tokens)
+            
+            # Cost estimates (per 1M tokens as of 2024)
+            # These are approximate values
+            cost_per_1m_tokens = {
+                'gpt-4': 30.0,  # Input tokens
+                'gpt-4o': 2.5,  # Input tokens
+                'gpt-4-turbo': 10.0,
+                'gpt-3.5-turbo': 0.5,
+                'claude': 15.0,
+                'claude-3': 15.0,
+            }
+            
+            cost_rate = cost_per_1m_tokens.get(model, 10.0)
+            estimated_cost = (token_count / 1_000_000) * cost_rate
+            
+            return {
+                'text': text,
+                'model': model,
+                'encoding': encoding_name,
+                'token_count': token_count,
+                'estimated_cost_usd': round(estimated_cost, 6)
+            }
+        except Exception as e:
+            # Fallback if encoding fails
+            word_count = len(text.split())
+            estimated_tokens = int(word_count * 1.3)
+            return {
+                'text': text,
+                'model': model,
+                'token_count': estimated_tokens,
+                'estimated_cost_usd': 0.0,
+                'error': f'Tokenization failed: {str(e)}'
+            }
     
     # ========================================================================
-    # Group B: Language Detection (Phase 1B - Placeholder)
+    # Group B: Language Detection (Phase 1B)
     # ========================================================================
     
     def detect_language(self, text: str) -> Dict:
         """
-        Detect language of text
-        
-        NOTE: Phase 1B implementation - currently placeholder
-        Will use langdetect or fasttext for accurate detection
+        Detect language of text using langdetect
         
         Args:
             text: Text to analyze
@@ -312,25 +380,100 @@ class TextService:
         Returns:
             Dict with language code, name, and confidence
         """
-        # Placeholder - always returns English
-        # Will be replaced with proper detection in Phase 1B
-        return {
-            'code': 'en',
-            'name': 'English',
-            'confidence': 1.0,
-            'note': 'Placeholder implementation - Phase 1B will use language detection library'
+        if not LANGDETECT_AVAILABLE:
+            return {
+                'code': 'en',
+                'name': 'English',
+                'confidence': 0.0,
+                'note': 'langdetect not available - defaulting to English'
+            }
+        
+        # Language code to name mapping (common languages)
+        language_names = {
+            'af': 'Afrikaans', 'ar': 'Arabic', 'bg': 'Bulgarian', 'bn': 'Bengali',
+            'ca': 'Catalan', 'cs': 'Czech', 'cy': 'Welsh', 'da': 'Danish',
+            'de': 'German', 'el': 'Greek', 'en': 'English', 'es': 'Spanish',
+            'et': 'Estonian', 'fa': 'Persian', 'fi': 'Finnish', 'fr': 'French',
+            'gu': 'Gujarati', 'he': 'Hebrew', 'hi': 'Hindi', 'hr': 'Croatian',
+            'hu': 'Hungarian', 'id': 'Indonesian', 'it': 'Italian', 'ja': 'Japanese',
+            'kn': 'Kannada', 'ko': 'Korean', 'lt': 'Lithuanian', 'lv': 'Latvian',
+            'mk': 'Macedonian', 'ml': 'Malayalam', 'mr': 'Marathi', 'ne': 'Nepali',
+            'nl': 'Dutch', 'no': 'Norwegian', 'pa': 'Punjabi', 'pl': 'Polish',
+            'pt': 'Portuguese', 'ro': 'Romanian', 'ru': 'Russian', 'sk': 'Slovak',
+            'sl': 'Slovenian', 'so': 'Somali', 'sq': 'Albanian', 'sv': 'Swedish',
+            'sw': 'Swahili', 'ta': 'Tamil', 'te': 'Telugu', 'th': 'Thai',
+            'tl': 'Tagalog', 'tr': 'Turkish', 'uk': 'Ukrainian', 'ur': 'Urdu',
+            'vi': 'Vietnamese', 'zh-cn': 'Chinese (Simplified)', 'zh-tw': 'Chinese (Traditional)'
         }
+        
+        try:
+            # Get detailed detection with probabilities
+            detections = detect_langs(text)
+            
+            if not detections:
+                return {
+                    'code': 'unknown',
+                    'name': 'Unknown',
+                    'confidence': 0.0,
+                    'note': 'Could not detect language'
+                }
+            
+            # Get the most likely language
+            top_detection = detections[0]
+            lang_code = top_detection.lang
+            confidence = top_detection.prob
+            
+            # Get language name
+            lang_name = language_names.get(lang_code, lang_code.upper())
+            
+            # Include alternatives if confidence is low
+            result = {
+                'code': lang_code,
+                'name': lang_name,
+                'confidence': round(confidence, 4)
+            }
+            
+            # Add alternatives if there are multiple possibilities
+            if len(detections) > 1 and confidence < 0.95:
+                alternatives = []
+                for det in detections[1:4]:  # Top 3 alternatives
+                    alt_code = det.lang
+                    alt_name = language_names.get(alt_code, alt_code.upper())
+                    alternatives.append({
+                        'code': alt_code,
+                        'name': alt_name,
+                        'confidence': round(det.prob, 4)
+                    })
+                result['alternatives'] = alternatives
+            
+            return result
+            
+        except LangDetectException as e:
+            return {
+                'code': 'unknown',
+                'name': 'Unknown',
+                'confidence': 0.0,
+                'error': f'Detection failed: {str(e)}'
+            }
+        except Exception as e:
+            return {
+                'code': 'unknown',
+                'name': 'Unknown',
+                'confidence': 0.0,
+                'error': f'Unexpected error: {str(e)}'
+            }
     
     # ========================================================================
-    # Group B: Sentiment Analysis (Phase 1B - Placeholder)
+    # Group B: Sentiment Analysis (Phase 1B)
     # ========================================================================
     
     def analyze_sentiment(self, text: str) -> Dict:
         """
-        Analyze sentiment of text
+        Analyze sentiment of text using VADER
         
-        NOTE: Phase 1B implementation - currently placeholder
-        Will use VADER for rule-based sentiment analysis
+        VADER (Valence Aware Dictionary and sEntiment Reasoner) is a 
+        lexicon and rule-based sentiment analysis tool that is specifically 
+        attuned to sentiments expressed in social media.
         
         Args:
             text: Text to analyze
@@ -338,16 +481,53 @@ class TextService:
         Returns:
             Dict with sentiment scores and classification
         """
-        # Placeholder - neutral sentiment
-        # Will be replaced with VADER in Phase 1B
-        return {
-            'text': text,
-            'sentiment': 'neutral',
-            'scores': {
-                'positive': 0.0,
-                'negative': 0.0,
-                'neutral': 1.0,
-                'compound': 0.0
-            },
-            'note': 'Placeholder implementation - Phase 1B will use VADER sentiment analysis'
-        }
+        if not VADER_AVAILABLE or _vader_analyzer is None:
+            return {
+                'text': text,
+                'sentiment': 'neutral',
+                'scores': {
+                    'positive': 0.0,
+                    'negative': 0.0,
+                    'neutral': 1.0,
+                    'compound': 0.0
+                },
+                'note': 'VADER not available - defaulting to neutral'
+            }
+        
+        try:
+            # Get sentiment scores
+            scores = _vader_analyzer.polarity_scores(text)
+            
+            # Classify based on compound score
+            # Compound score is a normalized metric between -1 (most negative) and +1 (most positive)
+            compound = scores['compound']
+            
+            if compound >= 0.05:
+                sentiment = 'positive'
+            elif compound <= -0.05:
+                sentiment = 'negative'
+            else:
+                sentiment = 'neutral'
+            
+            return {
+                'sentiment': sentiment,
+                'scores': {
+                    'positive': round(scores['pos'], 4),
+                    'negative': round(scores['neg'], 4),
+                    'neutral': round(scores['neu'], 4),
+                    'compound': round(scores['compound'], 4)
+                }
+            }
+            
+        except Exception as e:
+            return {
+                'text': text,
+                'sentiment': 'neutral',
+                'scores': {
+                    'positive': 0.0,
+                    'negative': 0.0,
+                    'neutral': 1.0,
+                    'compound': 0.0
+                },
+                'error': f'Sentiment analysis failed: {str(e)}'
+            }
