@@ -5,8 +5,8 @@ services:
     image: ghcr.io/dstar55/hello-world-kiro:latest
     restart: unless-stopped
     ports:
-      # 80 is taken by the VM's existing nginx, so the app is served on 8080
-      - "8080:8000"
+      # Bound to localhost only; host nginx serves https://kiro.fractus.io and proxies here
+      - "127.0.0.1:8080:8000"
     volumes:
       # Persist SQLite database across container restarts
       - ./data:/app/data
