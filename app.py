@@ -31,7 +31,7 @@ app.register_blueprint(text_bp)
 LANGUAGES = {
     'en': {
         'name': 'English',
-        'greeting': 'Hello, World!',
+        'greeting': 'Hello, World!!!',
         'flag': '🇬🇧',
         'currency': 'GBP',
         'currency_symbol': '£',
@@ -39,7 +39,7 @@ LANGUAGES = {
     },
     'de': {
         'name': 'Deutsch',
-        'greeting': 'Hallo, Welt!',
+        'greeting': 'Hallo, Welt!!!',
         'flag': '🇩🇪',
         'currency': 'EUR',
         'currency_symbol': '€',
@@ -47,7 +47,7 @@ LANGUAGES = {
     },
     'fr': {
         'name': 'Français',
-        'greeting': 'Bonjour, le monde!',
+        'greeting': 'Bonjour, le monde!!!',
         'flag': '🇫🇷',
         'currency': 'EUR',
         'currency_symbol': '€',
@@ -55,7 +55,7 @@ LANGUAGES = {
     },
     'hr': {
         'name': 'Hrvatski',
-        'greeting': 'Pozdrav, svijete!',
+        'greeting': 'Pozdrav, svijete!!!',
         'flag': '🇭🇷',
         'currency': 'EUR',
         'currency_symbol': '€',
@@ -63,7 +63,7 @@ LANGUAGES = {
     },
     'es': {
         'name': 'Español',
-        'greeting': '¡Hola, Mundo!',
+        'greeting': '¡Hola, Mundo!!!',
         'flag': '🇪🇸',
         'currency': 'EUR',
         'currency_symbol': '€',
@@ -71,7 +71,7 @@ LANGUAGES = {
     },
     'tr': {
         'name': 'Türkçe',
-        'greeting': 'Merhaba, Dünya!',
+        'greeting': 'Merhaba, Dünya!!!',
         'flag': '🇹🇷',
         'currency': 'TRY',
         'currency_symbol': '₺',
@@ -79,7 +79,7 @@ LANGUAGES = {
     },
     'pt': {
         'name': 'Português',
-        'greeting': 'Olá, Mundo!',
+        'greeting': 'Olá, Mundo!!!',
         'flag': '🇵🇹',
         'currency': 'EUR',
         'currency_symbol': '€',
@@ -87,7 +87,7 @@ LANGUAGES = {
     },
     'ru': {
         'name': 'Русский',
-        'greeting': 'Привет, мир!',
+        'greeting': 'Привет, мир!!!',
         'flag': '🇷🇺',
         'currency': 'RUB',
         'currency_symbol': '₽',
