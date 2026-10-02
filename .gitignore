@@ -157,6 +157,12 @@ ENV/
 env.bak/
 venv.bak/
 
+# Monitoring & Analytics (AI Agent Ready)
+logs/
+data/
+*.db
+*.log
+
 # Spyder project settings
 .spyderproject
 .spyproject
