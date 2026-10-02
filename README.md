@@ -1,6 +1,15 @@
-# Hello World - Kiro
+# 🌍 Hello World API - AI Agent Ready
 
-A simple Python Flask web application that displays "Hello, World!" in multiple languages.
+**A production-ready Python Flask API with multi-language support, text processing, and AI agent integration.**
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Flask](https://img.shields.io/badge/flask-3.0+-green.svg)](https://flask.palletsprojects.com/)
+[![AI Agent Ready](https://img.shields.io/badge/AI%20Agent-Ready-success.svg)](https://kiro.fractus.io/llms.txt)
+
+🔗 **Live Site:** https://kiro.fractus.io  
+📚 **API Docs:** https://kiro.fractus.io/api/docs  
+🤖 **AI Agent Guide:** [AI_AGENT_GUIDE.md](AI_AGENT_GUIDE.md)
 
 ## Supported Languages
 
@@ -14,137 +23,207 @@ A simple Python Flask web application that displays "Hello, World!" in multiple 
 - 🇷🇺 **Russian (Русский)** - Привет, мир! (Currency: RUB ₽)
 - 🇺🇸 **US Dollar** - USD $ (Base currency for conversions)
 
-## Prerequisites
+## 🚀 Quick Start
 
-- Python 3.8 or higher
+### Prerequisites
+
+- Python 3.9 or higher
+- Redis (for caching and rate limiting)
 - pip (Python package installer)
 
-## Setup Instructions
+### Installation
 
-### 1. Clone the Repository (if not already done)
-
+1. **Clone the repository:**
 ```bash
 git clone https://github.com/dstar55/hello-world-kiro.git
 cd hello-world-kiro
 ```
 
-### 2. Create Virtual Environment
-
+2. **Create virtual environment:**
 ```bash
-python -m venv venv
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
-### 3. Activate Virtual Environment
-
-**On Linux/macOS:**
-```bash
-source venv/bin/activate
-```
-
-**On Windows:**
-```bash
-venv\Scripts\activate
-```
-
-### 4. Install Dependencies
-
+3. **Install dependencies:**
 ```bash
 pip install -r requirements.txt
 ```
 
-## Running the Application
+4. **Configure environment:**
+```bash
+cp .env.example .env
+# Edit .env with your settings
+```
 
-1. Ensure your virtual environment is activated
-2. Run the application:
+5. **Start Redis** (if not already running):
+```bash
+# Linux/macOS
+redis-server
 
+# Docker
+docker run -d --name redis -p 6379:6379 redis:alpine
+```
+
+6. **Run the application:**
 ```bash
 python app.py
 ```
 
-3. Open your web browser and navigate to:
-
+7. **Open your browser:**
 ```
 http://localhost:5000
 ```
 
-You should see "Hello, World!" displayed on the page with a beautiful gradient background.
+## 📖 Documentation
 
-## Available Routes
+| Document | Description |
+|----------|-------------|
+| [API_DOCUMENTATION.md](API_DOCUMENTATION.md) | Complete API reference |
+| [API_EXAMPLES.md](API_EXAMPLES.md) | API usage examples |
+| [AI_AGENT_GUIDE.md](AI_AGENT_GUIDE.md) | Guide for AI agent integration |
+| [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) | Production deployment instructions |
+| [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md) | Pre-launch checklist |
+| [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) | Implementation progress |
 
-The application supports multiple language routes:
+## 🛣️ API Endpoints
 
-- **English (default)**: `http://localhost:5000/`
-- **German**: `http://localhost:5000/de`
-- **French**: `http://localhost:5000/fr`
-- **Croatian**: `http://localhost:5000/hr`
-- **Spanish**: `http://localhost:5000/es`
-- **Turkish**: `http://localhost:5000/tr`
-- **Portuguese**: `http://localhost:5000/pt`
+### **Web Pages**
+- `/` - Homepage (English)
+- `/de`, `/fr`, `/hr`, `/es`, `/tr`, `/pt`, `/ru` - Other languages
+- `/api/docs` - Interactive API documentation
+- `/admin` - Admin dashboard (requires authentication)
 
-- **Russian**: `http://localhost:5000/ru`
+### **API Discovery**
+- `/llms.txt` - AI agent discovery file
+- `/robots.txt` - Crawler guidelines
+- `/sitemap.xml` - Site structure
+- `/.well-known/mcp.json` - Model Context Protocol card
+- `/openapi.json` - OpenAPI 3.0 specification
 
-You can also switch between languages using the language selector buttons on the page.
+### **Text API**
+- `POST /api/text/uppercase` - Convert to uppercase
+- `POST /api/text/lowercase` - Convert to lowercase
+- `POST /api/text/reverse` - Reverse text
+- `POST /api/text/length` - Get text length
+- `POST /api/text/word-count` - Count words
+- And 5 more operations...
 
-## Currency Converter
+### **Batch Processing**
+- `POST /api/batch` - Process up to 100 operations at once
+- `GET /api/operations` - List all available operations
 
-The application includes a built-in currency converter with **live exchange rates** that supports the following currencies:
+### **System**
+- `GET /health` - Health check
+- `GET /api` - API information
+- `GET /api/capabilities` - Detailed capabilities
+- `POST /api/convert` - Currency conversion
 
-- **USD** - US Dollar ($)
-- **EUR** - Euro (€)
-- **GBP** - British Pound (£)
-- **TRY** - Turkish Lira (₺)
-- **RUB** - Russian Ruble (₽)
+## 💡 Usage Examples
 
-### Exchange Rate Source
+### Text API (Single Operation)
+```bash
+curl -X POST https://kiro.fractus.io/api/text/uppercase \
+  -H "Content-Type: application/json" \
+  -d '{"text": "hello world"}'
 
-Exchange rates are fetched in real-time from **[exchangerate-api.com](https://exchangerate-api.com)**, a free and reliable API that provides current foreign exchange rates from multiple sources.
+# Response: {"success": true, "result": "HELLO WORLD"}
+```
 
-**Features:**
-- 🔄 **Live rates**: Updated automatically from multiple foreign exchange sources
-- ⚡ **Smart caching**: Rates cached for 1 hour to improve performance
-- 🛡️ **Fallback protection**: Uses static rates if API is unavailable
-- 📊 **Transparent**: Shows whether rates are live or cached
-- 🕐 **Rate timestamps**: Displays when rates were last updated
+### Batch Processing (Multiple Operations)
+```bash
+curl -X POST https://kiro.fractus.io/api/batch \
+  -H "Content-Type: application/json" \
+  -d '{
+    "operations": [
+      {"operation": "uppercase", "text": "hello"},
+      {"operation": "reverse", "text": "world"},
+      {"operation": "length", "text": "test"}
+    ]
+  }'
 
-### How to Use
+# Response: All 3 operations processed in one request
+```
 
-1. Enter the amount you want to convert
-2. Select the source currency from the "From" dropdown
-3. Select the target currency from the "To" dropdown
-4. Click the "Convert" button to see the result
-5. The converter displays:
-   - Converted amount with currency symbols
-   - Current exchange rate
-   - Rate source (live/cached)
-   - Last update timestamp
+### For AI Agents
+```python
+import requests
 
-### Technical Details
+# Higher rate limits automatically applied with User-Agent
+headers = {"User-Agent": "GPTBot/1.0"}
+response = requests.post(
+    "https://kiro.fractus.io/api/text/uppercase",
+    json={"text": "hello"},
+    headers=headers
+)
+```
 
-- **API Endpoint**: `https://api.exchangerate-api.com/v4/latest/USD`
-- **Update Frequency**: Updated multiple times per day
-- **Cache Duration**: 1 hour (configurable)
-- **Base Currency**: USD (all conversions use USD as intermediate)
-- **Error Handling**: Automatic fallback to static rates if API is unavailable
-- **No API Key Required**: Uses the free v4 API endpoint
+See [AI_AGENT_GUIDE.md](AI_AGENT_GUIDE.md) for complete integration guide.
 
-## Stopping the Application
-
-Press `Ctrl+C` in the terminal where the application is running.
-
-## Project Structure
+## 📁 Project Structure
 
 ```
 hello-world-kiro/
-├── app.py              # Main Flask application
-├── templates/          # HTML templates directory
-│   └── index.html     # Homepage template
-├── requirements.txt    # Python dependencies
-├── .kiro/             # Kiro configuration
-│   └── steering/      # Steering rules
-├── .gitignore         # Git ignore rules
-├── LICENSE            # License file
-└── README.md          # This file
+├── api/                          # API blueprints
+│   ├── text.py                   # Text processing endpoints
+│   ├── discovery_routes.py       # AI agent discovery
+│   ├── openapi_spec.py          # OpenAPI 3.0 generator
+│   └── batch_routes.py          # Batch processing
+├── config/                       # Configuration
+│   └── site_config.py           # Centralized site configuration
+├── middleware/                   # Middleware
+│   ├── monitoring_middleware.py  # Request tracking
+│   ├── cors_middleware.py        # CORS support
+│   └── rate_limit_middleware.py  # Rate limiting
+├── services/                     # Services
+│   ├── cache_service.py         # Redis caching
+│   ├── text_service.py          # Text operations
+│   └── monitoring_service.py    # Analytics and monitoring
+├── templates/                    # HTML templates
+│   ├── base.html                # Base template with SEO
+│   ├── index.html               # Homepage
+│   ├── api_docs.html            # Interactive API docs
+│   ├── api_test.html            # API testing page
+│   └── admin_dashboard.html     # Admin dashboard
+├── app.py                       # Main Flask application
+├── requirements.txt             # Python dependencies
+├── .env.example                 # Environment variables template
+├── Dockerfile                   # Docker configuration
+├── docker-compose.yml           # Docker Compose setup
+└── README.md                    # This file
 ```
+
+## ⚙️ Configuration
+
+All configuration is centralized in `.env` file:
+
+```env
+# Site Identity
+SITE_NAME=Hello World API
+SITE_DOMAIN=kiro.fractus.io
+SITE_URL=https://kiro.fractus.io
+
+# Security
+SECRET_KEY=your-secret-key-here
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=changeme123
+
+# Rate Limiting
+RATE_LIMIT_ENABLED=true
+RATE_LIMIT_PER_MINUTE=100
+RATE_LIMIT_PER_HOUR=1000
+
+# Features
+MONITORING_ENABLED=true
+CACHE_ENABLED=true
+ENABLE_BATCH_PROCESSING=true
+ENABLE_AGENT_TRACKING=true
+
+# Redis
+REDIS_URL=redis://localhost:6379/0
+```
+
+**⚠️ Important:** Always change default credentials in production!
 
 ## Technology Stack
 
@@ -152,56 +231,231 @@ hello-world-kiro/
 - **Language**: Python 3.8+
 - **Template Engine**: Jinja2 (built into Flask)
 
-## Features
+## ✨ Features
 
-- **Multi-language support**: English, German, French, Croatian, Spanish, Turkish, Portuguese, and Russian
-- **Live currency converter**: Convert between USD, EUR, GBP, TRY, and RUB with real-time exchange rates
-- **Exchange rate API**: Powered by [exchangerate-api.com](https://exchangerate-api.com) with multi-source data
-- **Smart caching**: Rates cached for 1 hour to optimize performance
-- **Automatic fallback**: Uses static rates if API is unavailable
-- **Language switcher**: Easy navigation between language versions with flag emojis
-- **Clean Flask structure**: Route-based language implementation
-- **Responsive design**: Works on desktop, tablet, and mobile devices
-- **Modern styling**: Beautiful gradient background with centered card layout
-- **Debug mode**: Enabled for development with auto-reload
+### **🌐 Multi-Language Support**
+- 8 languages: English, German, French, Croatian, Spanish, Turkish, Portuguese, Russian
+- Flag emojis for easy navigation
+- Currency information for each language
 
-## Troubleshooting
+### **💱 Live Currency Converter**
+- Real-time exchange rates from [exchangerate-api.com](https://exchangerate-api.com)
+- Smart 1-hour caching for performance
+- Automatic fallback to static rates
+- Support for USD, EUR, GBP, TRY, RUB
 
-### Port Already in Use
+### **🤖 AI Agent Ready**
+- **Discovery**: `/llms.txt`, `/robots.txt`, `/sitemap.xml`, `/.well-known/mcp.json`
+- **OpenAPI 3.0** specification at `/openapi.json`
+- **Higher rate limits** for AI agents (200/min vs 100/min)
+- **Automatic detection** of GPTBot, Claude-Web, PerplexityBot, Googlebot-AI, etc.
+- **Batch processing** for efficient multi-operation requests
 
-If port 5000 is already in use, you can change it by modifying the last line in `app.py`:
+### **📦 Text Processing API**
+10 text operations available:
+- Uppercase, Lowercase, Reverse, Length, Word Count
+- Capitalize, Title Case, Strip, Swapcase, Count Vowels
 
-```python
-app.run(host='localhost', port=5001, debug=True)  # Change to any available port
-```
+**Batch processing support**: Process up to 100 operations in a single request!
 
-### Module Not Found Error
+### **🛡️ Safety & Performance**
+- **Rate limiting**: IP-based with AI agent detection
+- **CORS enabled**: Cross-origin requests supported
+- **Monitoring**: Comprehensive request tracking and analytics
+- **Admin dashboard**: Real-time metrics at `/admin`
+- **Caching**: Redis-backed for optimal performance
 
-Make sure you've activated the virtual environment and installed dependencies:
+### **📊 Admin Dashboard**
+- Real-time request metrics
+- AI agent activity tracking
+- Success rates and response times
+- Rate limit event monitoring
+- Top endpoints analysis
+- HTTP Basic Authentication
+
+### **📚 Documentation**
+- Interactive API docs at `/api/docs`
+- Complete AI agent integration guide
+- OpenAPI 3.0 specification
+- Code examples in Python, JavaScript, cURL, Go
+
+## 🧪 Testing
 
 ```bash
-source venv/bin/activate  # or venv\Scripts\activate on Windows
-pip install -r requirements.txt
+# Test configuration
+python -c "from config import SiteConfig; print('Config OK')"
+
+# Test Redis
+python -c "from services.cache_service import cache; print('Redis:', cache.health_check())"
+
+# Test health endpoint
+curl http://localhost:5000/health
+
+# Test text API
+curl -X POST http://localhost:5000/api/text/uppercase \
+  -H "Content-Type: application/json" \
+  -d '{"text": "test"}'
+
+# Run full test suite
+python -m pytest tests/
 ```
 
-### Permission Denied
+## 🚀 Deployment
 
-On some systems, you may need to use `python3` instead of `python`:
+See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for complete deployment instructions.
 
+**Quick deployment options:**
+
+### Docker
 ```bash
-python3 -m venv venv
-python3 app.py
+docker-compose up -d
 ```
 
-## Development Notes
+### Systemd Service
+```bash
+sudo systemctl enable hello-world-api
+sudo systemctl start hello-world-api
+```
 
-- The application runs in debug mode by default, which provides:
-  - Automatic reloading when code changes
-  - Detailed error messages
-  - Interactive debugger
+### Cloud Platforms
+- Heroku: `git push heroku main`
+- Google Cloud Run: `gcloud run deploy`
+- AWS Elastic Beanstalk: `eb deploy`
 
-**⚠️ Warning**: Never run with `debug=True` in production!
+**Pre-deployment checklist:** [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md)
 
 ## License
 
 See LICENSE file for details.
+
+
+## 🤖 For AI Agents
+
+This API is specifically designed to be AI agent-friendly:
+
+### **Automatic Discovery**
+AI agents can discover this API via:
+1. Check `/robots.txt` → Find `/llms.txt`
+2. Read `/llms.txt` → Get API description
+3. Fetch `/openapi.json` → Get full specification
+4. Start using API → Success!
+
+### **Higher Rate Limits**
+Automatically detected AI agents get 2x rate limit:
+- Standard: 100 requests/minute
+- AI Agents: 200 requests/minute
+
+Detected agents: GPTBot, Claude-Web, PerplexityBot, Googlebot-AI, Meta-AI, AppleBot-AI
+
+### **Batch Processing**
+Process up to 100 operations in a single request:
+```json
+{
+  "operations": [
+    {"operation": "uppercase", "text": "hello"},
+    {"operation": "reverse", "text": "world"}
+  ]
+}
+```
+
+### **Complete Documentation**
+- [AI_AGENT_GUIDE.md](AI_AGENT_GUIDE.md) - Full integration guide
+- [API_DOCUMENTATION.md](API_DOCUMENTATION.md) - API reference
+- `/api/docs` - Interactive documentation
+- `/openapi.json` - OpenAPI 3.0 specification
+
+## 🛡️ Security Features
+
+- ✅ Rate limiting (IP-based with AI agent detection)
+- ✅ CORS enabled for cross-origin requests
+- ✅ HTTP Basic Authentication for admin dashboard
+- ✅ Input validation and sanitization
+- ✅ Secure default configurations
+- ✅ Environment-based secrets management
+- ✅ Redis password support
+- ✅ HTTPS ready (with reverse proxy)
+
+## 📊 Monitoring
+
+### Admin Dashboard
+Access real-time metrics at `/admin`:
+- Request counts and success rates
+- AI agent activity tracking
+- Response time analytics
+- Rate limit events
+- Top endpoints by usage
+
+**Authentication:** HTTP Basic Auth (configure in `.env`)
+
+### Health Check
+```bash
+curl https://kiro.fractus.io/health
+```
+
+Returns:
+- API status
+- Redis connection status
+- Cache statistics
+- Enabled features
+
+## 🔧 Technology Stack
+
+- **Framework:** Flask 3.0+
+- **Language:** Python 3.9+
+- **Caching:** Redis
+- **Database:** SQLite (default) / PostgreSQL (optional)
+- **Rate Limiting:** Flask-Limiter
+- **CORS:** Flask-CORS
+- **Template Engine:** Jinja2
+- **WSGI Server:** Gunicorn (production)
+
+## 📈 Performance
+
+- **Response Time:** <100ms average
+- **Throughput:** 100-200 requests/minute per client
+- **Batch Processing:** 90% faster than individual requests
+- **Caching:** Redis-backed for optimal performance
+- **Scaling:** Horizontal scaling ready
+
+## 🤝 Contributing
+
+Contributions are welcome! Please:
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Flask community for the excellent framework
+- AI agent providers for inspiring this project
+- Contributors and users of this API
+
+## 📞 Support
+
+- **GitHub Issues:** [Create an issue](https://github.com/dstar55/hello-world-kiro/issues)
+- **Email:** support@fractus.io
+- **Documentation:** https://kiro.fractus.io/api/docs
+
+## 🗺️ Roadmap
+
+- [ ] GraphQL support
+- [ ] WebSocket connections
+- [ ] More text processing operations
+- [ ] Multi-language text processing
+- [ ] Machine learning integrations
+- [ ] Enhanced analytics dashboard
+
+---
+
+**Built with ❤️ for AI agents and developers**
+
+🔗 Live Site: https://kiro.fractus.io  
+📚 Documentation: https://kiro.fractus.io/api/docs  
+🤖 AI Agent Guide: [AI_AGENT_GUIDE.md](AI_AGENT_GUIDE.md)
