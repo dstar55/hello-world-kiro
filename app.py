@@ -43,6 +43,10 @@ init_monitoring_middleware(app)
 from middleware.cors_middleware import init_cors_middleware
 init_cors_middleware(app)
 
+# Initialize rate limiting
+from middleware.rate_limit_middleware import init_rate_limiting
+limiter = init_rate_limiting(app)
+
 # Language configurations with currency data
 LANGUAGES = {
     'en': {
@@ -547,6 +551,99 @@ def api_docs():
         HTML page with comprehensive API documentation
     """
     return render_template('api_docs.html', site_config=SiteConfig)
+
+
+@app.route('/admin')
+def admin_dashboard():
+    """
+    Admin dashboard with basic authentication
+    
+    Returns:
+        HTML page with real-time metrics and monitoring
+    """
+    from functools import wraps
+    from flask import request, Response
+    
+    def check_auth(username, password):
+        """Check if username/password combination is valid."""
+        return (username == SiteConfig.ADMIN_USERNAME and 
+                password == SiteConfig.ADMIN_PASSWORD)
+    
+    def authenticate():
+        """Send 401 response for authentication."""
+        return Response(
+            'Admin authentication required.\n'
+            'Please provide valid credentials.',
+            401,
+            {'WWW-Authenticate': 'Basic realm="Admin Dashboard"'}
+        )
+    
+    # Check authentication
+    auth = request.authorization
+    if not auth or not check_auth(auth.username, auth.password):
+        return authenticate()
+    
+    # Get dashboard data
+    from services.monitoring_service import monitoring
+    
+    # Get statistics
+    stats = monitoring.get_dashboard_stats()
+    
+    # Get AI agents activity
+    ai_agents = [
+        {
+            'name': 'GPTBot',
+            'icon': '🤖',
+            'requests': stats.get('ai_agents', {}).get('GPTBot', {}).get('count', 0),
+            'avg_response_time': stats.get('ai_agents', {}).get('GPTBot', {}).get('avg_response_time', 0),
+            'rate_limit': 200
+        },
+        {
+            'name': 'Claude-Web',
+            'icon': '🧠',
+            'requests': stats.get('ai_agents', {}).get('Claude-Web', {}).get('count', 0),
+            'avg_response_time': stats.get('ai_agents', {}).get('Claude-Web', {}).get('avg_response_time', 0),
+            'rate_limit': 200
+        },
+        {
+            'name': 'PerplexityBot',
+            'icon': '🔍',
+            'requests': stats.get('ai_agents', {}).get('PerplexityBot', {}).get('count', 0),
+            'avg_response_time': stats.get('ai_agents', {}).get('PerplexityBot', {}).get('avg_response_time', 0),
+            'rate_limit': 150
+        },
+        {
+            'name': 'Googlebot-AI',
+            'icon': '🌐',
+            'requests': stats.get('ai_agents', {}).get('Googlebot-AI', {}).get('count', 0),
+            'avg_response_time': stats.get('ai_agents', {}).get('Googlebot-AI', {}).get('avg_response_time', 0),
+            'rate_limit': 200
+        }
+    ]
+    
+    # Get health status
+    redis_status = "connected" if cache.health_check() else "disconnected"
+    health = {
+        'status': 'healthy',
+        'redis': redis_status
+    }
+    
+    # Get recent requests
+    recent_requests = stats.get('recent_requests', [])
+    
+    # Get top endpoints
+    top_endpoints = stats.get('top_endpoints', [])
+    
+    return render_template(
+        'admin_dashboard.html',
+        site_config=SiteConfig,
+        stats=stats,
+        health=health,
+        ai_agents=ai_agents,
+        recent_requests=recent_requests,
+        top_endpoints=top_endpoints,
+        last_updated=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    )
 
 
 if __name__ == '__main__':
