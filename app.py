@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 import os
 from dotenv import load_dotenv
 from services.cache_service import cache
+from config import SiteConfig
 
 # Load environment variables from .env file
 load_dotenv()
@@ -25,7 +26,16 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-pro
 
 # Register API blueprints
 from api.text import text_bp
+from api.discovery_routes import discovery_bp
+from api.openapi_spec import openapi_bp
+
 app.register_blueprint(text_bp)
+app.register_blueprint(discovery_bp)
+app.register_blueprint(openapi_bp)
+
+# Initialize monitoring middleware
+from middleware.monitoring_middleware import init_monitoring_middleware
+init_monitoring_middleware(app)
 
 # Language configurations with currency data
 LANGUAGES = {
@@ -203,7 +213,8 @@ def index():
                          greeting=LANGUAGES['en']['greeting'],
                          lang_name=LANGUAGES['en']['name'],
                          languages=LANGUAGES,
-                         currencies=get_all_currencies())
+                         currencies=get_all_currencies(),
+                         site_config=SiteConfig)
 
 
 @app.route('/de')
@@ -219,7 +230,8 @@ def german():
                          greeting=LANGUAGES['de']['greeting'],
                          lang_name=LANGUAGES['de']['name'],
                          languages=LANGUAGES,
-                         currencies=get_all_currencies())
+                         currencies=get_all_currencies(),
+                         site_config=SiteConfig)
 
 
 @app.route('/fr')
@@ -235,7 +247,8 @@ def french():
                          greeting=LANGUAGES['fr']['greeting'],
                          lang_name=LANGUAGES['fr']['name'],
                          languages=LANGUAGES,
-                         currencies=get_all_currencies())
+                         currencies=get_all_currencies(),
+                         site_config=SiteConfig)
 
 
 @app.route('/hr')
@@ -251,7 +264,8 @@ def croatian():
                          greeting=LANGUAGES['hr']['greeting'],
                          lang_name=LANGUAGES['hr']['name'],
                          languages=LANGUAGES,
-                         currencies=get_all_currencies())
+                         currencies=get_all_currencies(),
+                         site_config=SiteConfig)
 
 
 @app.route('/es')
@@ -267,7 +281,8 @@ def spanish():
                          greeting=LANGUAGES['es']['greeting'],
                          lang_name=LANGUAGES['es']['name'],
                          languages=LANGUAGES,
-                         currencies=get_all_currencies())
+                         currencies=get_all_currencies(),
+                         site_config=SiteConfig)
 
 
 @app.route('/tr')
@@ -283,7 +298,8 @@ def turkish():
                          greeting=LANGUAGES['tr']['greeting'],
                          lang_name=LANGUAGES['tr']['name'],
                          languages=LANGUAGES,
-                         currencies=get_all_currencies())
+                         currencies=get_all_currencies(),
+                         site_config=SiteConfig)
 
 
 @app.route('/pt')
@@ -299,7 +315,8 @@ def portuguese():
                          greeting=LANGUAGES['pt']['greeting'],
                          lang_name=LANGUAGES['pt']['name'],
                          languages=LANGUAGES,
-                         currencies=get_all_currencies())
+                         currencies=get_all_currencies(),
+                         site_config=SiteConfig)
 
 
 @app.route('/ru')
@@ -315,7 +332,8 @@ def russian():
                          greeting=LANGUAGES['ru']['greeting'],
                          lang_name=LANGUAGES['ru']['name'],
                          languages=LANGUAGES,
-                         currencies=get_all_currencies())
+                         currencies=get_all_currencies(),
+                         site_config=SiteConfig)
 
 
 @app.route('/api/convert', methods=['POST'])
@@ -386,10 +404,16 @@ def health():
     
     return jsonify({
         'status': 'healthy',
+        'api_version': SiteConfig.API_VERSION,
+        'site_name': SiteConfig.SITE_NAME,
         'redis': redis_status,
         'cache_stats': cache_stats,
         'timestamp': datetime.now().isoformat(),
-        'version': '1.1.0'
+        'features': {
+            'monitoring': SiteConfig.MONITORING_ENABLED,
+            'rate_limiting': SiteConfig.RATE_LIMIT_ENABLED,
+            'caching': SiteConfig.CACHE_ENABLED
+        }
     })
 
 
@@ -402,11 +426,15 @@ def api_info():
         JSON with API documentation
     """
     return jsonify({
-        'name': 'Hello World API',
-        'version': '1.1.0',
+        'name': SiteConfig.SITE_NAME,
+        'version': SiteConfig.API_VERSION,
+        'description': SiteConfig.SITE_DESCRIPTION,
+        'documentation': f'{SiteConfig.SITE_URL}/api/docs',
+        'openapi_spec': f'{SiteConfig.SITE_URL}/openapi.json',
+        'llms_txt': f'{SiteConfig.SITE_URL}/llms.txt',
         'endpoints': {
             'text_api': {
-                'base_url': '/api/text',
+                'base_url': f'{SiteConfig.API_BASE_PATH}/text',
                 'documentation': 'Text transformation and analysis endpoints',
                 'available_operations': [
                     'base64/encode',
@@ -429,6 +457,66 @@ def api_info():
                 'base_url': '/health',
                 'documentation': 'System health status'
             }
+        },
+        'rate_limits': {
+            'default': f'{SiteConfig.RATE_LIMIT_PER_MINUTE} requests per minute',
+            'ai_agents': f'{SiteConfig.get_rate_limit_for_agent("GPTBot")} requests per minute'
+        },
+        'contact': {
+            'organization': SiteConfig.ORG_NAME,
+            'email': SiteConfig.SUPPORT_EMAIL,
+            'github': SiteConfig.GITHUB_REPO
+        }
+    })
+
+
+@app.route('/api/capabilities')
+def api_capabilities():
+    """
+    API capabilities endpoint for AI agents
+    
+    Returns detailed information about what the API can do
+    """
+    return jsonify({
+        'api_version': SiteConfig.API_VERSION,
+        'api_name': SiteConfig.SITE_NAME,
+        'capabilities': {
+            'text_processing': {
+                'operations': ['encode', 'decode', 'hash', 'normalize', 'stats', 'extract', 'case-convert'],
+                'max_text_length': SiteConfig.MAX_TEXT_LENGTH,
+                'rate_limit': SiteConfig.RATE_LIMIT_PER_MINUTE,
+                'features': ['instant', 'no-auth-required', 'cors-enabled']
+            },
+            'ml_operations': {
+                'operations': ['tokenize', 'detect-language', 'sentiment'],
+                'models_supported': ['gpt-4', 'gpt-4o', 'gpt-3.5-turbo', 'claude'],
+                'status': 'production',
+                'caching': SiteConfig.CACHE_ENABLED
+            },
+            'currency_conversion': {
+                'supported_currencies': ['USD', 'EUR', 'GBP', 'TRY', 'RUB'],
+                'update_frequency': 'multiple times daily',
+                'source': 'exchangerate-api.com'
+            }
+        },
+        'features': {
+            'cors_enabled': True,
+            'batch_processing': SiteConfig.ENABLE_BATCH_PROCESSING,
+            'caching': SiteConfig.CACHE_ENABLED,
+            'monitoring': SiteConfig.MONITORING_ENABLED,
+            'agent_tracking': SiteConfig.ENABLE_AGENT_TRACKING
+        },
+        'documentation': {
+            'openapi_spec': f'{SiteConfig.SITE_URL}/openapi.json',
+            'llms_txt': f'{SiteConfig.SITE_URL}/llms.txt',
+            'api_docs': f'{SiteConfig.SITE_URL}/api/docs',
+            'interactive_test': f'{SiteConfig.SITE_URL}/api-test'
+        },
+        'rate_limiting': {
+            'enabled': SiteConfig.RATE_LIMIT_ENABLED,
+            'default_per_minute': SiteConfig.RATE_LIMIT_PER_MINUTE,
+            'default_per_hour': SiteConfig.RATE_LIMIT_PER_HOUR,
+            'ai_agents_per_minute': SiteConfig.get_rate_limit_for_agent('GPTBot')
         }
     })
 
@@ -441,7 +529,7 @@ def api_test():
     Returns:
         HTML page for testing text API endpoints
     """
-    return render_template('api_test.html')
+    return render_template('api_test.html', site_config=SiteConfig)
 
 
 if __name__ == '__main__':

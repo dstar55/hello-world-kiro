@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="{{ current_lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Primary Meta Tags -->
+    <title>{% block title %}{{ site_config.SITE_NAME }} - {{ lang_name }}{% endblock %}</title>
+    <meta name="title" content="{% block meta_title %}{{ site_config.SITE_NAME }} - {{ site_config.SITE_TAGLINE }}{% endblock %}">
+    <meta name="description" content="{% block meta_description %}{{ site_config.SITE_DESCRIPTION }}{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}{{ site_config.SITE_KEYWORDS }}{% endblock %}">
+    <meta name="author" content="{{ site_config.ORG_NAME }}">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="{% block canonical %}{{ site_config.SITE_URL }}{{ request.path }}{% endblock %}">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ site_config.SITE_URL }}{{ request.path }}">
+    <meta property="og:title" content="{% block og_title %}{{ site_config.SITE_NAME }} - {{ site_config.SITE_TAGLINE }}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}{{ site_config.SITE_DESCRIPTION }}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{{ site_config.SITE_URL }}/static/og-image.png{% endblock %}">
+    <meta property="og:site_name" content="{{ site_config.SITE_NAME }}">
+    <meta property="og:locale" content="{{ current_lang }}_{{ current_lang.upper() }}">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="{{ site_config.SITE_URL }}{{ request.path }}">
+    <meta property="twitter:title" content="{% block twitter_title %}{{ site_config.SITE_NAME }} - {{ site_config.SITE_TAGLINE }}{% endblock %}">
+    <meta property="twitter:description" content="{% block twitter_description %}{{ site_config.SITE_DESCRIPTION }}{% endblock %}">
+    <meta property="twitter:image" content="{% block twitter_image %}{{ site_config.SITE_URL }}/static/twitter-image.png{% endblock %}">
+    
+    <!-- Additional SEO -->
+    <meta name="theme-color" content="#667eea">
+    <link rel="alternate" hreflang="en" href="{{ site_config.SITE_URL }}/">
+    <link rel="alternate" hreflang="de" href="{{ site_config.SITE_URL }}/de">
+    <link rel="alternate" hreflang="fr" href="{{ site_config.SITE_URL }}/fr">
+    <link rel="alternate" hreflang="hr" href="{{ site_config.SITE_URL }}/hr">
+    <link rel="alternate" hreflang="es" href="{{ site_config.SITE_URL }}/es">
+    <link rel="alternate" hreflang="tr" href="{{ site_config.SITE_URL }}/tr">
+    <link rel="alternate" hreflang="pt" href="{{ site_config.SITE_URL }}/pt">
+    <link rel="alternate" hreflang="ru" href="{{ site_config.SITE_URL }}/ru">
+    
+    <!-- Structured Data (Schema.org JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebAPI",
+      "name": "{{ site_config.SITE_NAME }}",
+      "description": "{{ site_config.SITE_DESCRIPTION }}",
+      "url": "{{ site_config.SITE_URL }}",
+      "documentation": "{{ site_config.SITE_URL }}/api/docs",
+      "termsOfService": "{{ site_config.SITE_URL }}/terms",
+      "provider": {
+        "@type": "Organization",
+        "name": "{{ site_config.ORG_NAME }}",
+        "url": "{{ site_config.ORG_URL }}",
+        "email": "{{ site_config.SUPPORT_EMAIL }}",
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "contactType": "technical support",
+          "email": "{{ site_config.SUPPORT_EMAIL }}"
+        }
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD",
+        "description": "Free tier with rate limiting"
+      }
+    }
+    </script>
+    
+    {% block additional_structured_data %}{% endblock %}
+    
+    {% block head %}{% endblock %}
+</head>
+<body>
+    {% block content %}{% endblock %}
+</body>
+</html>
