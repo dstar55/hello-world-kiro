@@ -28,14 +28,20 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-pro
 from api.text import text_bp
 from api.discovery_routes import discovery_bp
 from api.openapi_spec import openapi_bp
+from api.batch_routes import batch_bp
 
 app.register_blueprint(text_bp)
 app.register_blueprint(discovery_bp)
 app.register_blueprint(openapi_bp)
+app.register_blueprint(batch_bp)
 
 # Initialize monitoring middleware
 from middleware.monitoring_middleware import init_monitoring_middleware
 init_monitoring_middleware(app)
+
+# Initialize CORS for cross-origin API requests
+from middleware.cors_middleware import init_cors_middleware
+init_cors_middleware(app)
 
 # Language configurations with currency data
 LANGUAGES = {
@@ -530,6 +536,17 @@ def api_test():
         HTML page for testing text API endpoints
     """
     return render_template('api_test.html', site_config=SiteConfig)
+
+
+@app.route('/api/docs')
+def api_docs():
+    """
+    API documentation page
+    
+    Returns:
+        HTML page with comprehensive API documentation
+    """
+    return render_template('api_docs.html', site_config=SiteConfig)
 
 
 if __name__ == '__main__':
